@@ -307,11 +307,11 @@ struct AvlNode *deleteAvlNode(struct AvlTree *avl_tree, const object_t *key_p) {
 
     if (node_to_delete->left_branch_ == NULL) {
         *stack_item = node_to_delete->right_branch_;
-        if (node_to_delete->right_branch_ == NULL) {
-            stack_item = *(--node_stack);
-            struct AvlNode *tmp = *stack_item;
-            if ((tmp->left_branch_ == NULL) || (tmp->right_branch_ == NULL)) tmp->height_ = 1;
-        }
+        //if (node_to_delete->right_branch_ == NULL) {
+        //    stack_item = *(--node_stack);
+        //    struct AvlNode *tmp = *stack_item;
+        //    if ((tmp->left_branch_ == NULL) || (tmp->right_branch_ == NULL)) tmp->height_ = 1;
+        //}
     } else if (node_to_delete->right_branch_ == NULL) {
         *stack_item = node_to_delete->left_branch_;
     } else {
@@ -335,8 +335,8 @@ struct AvlNode *deleteAvlNode(struct AvlTree *avl_tree, const object_t *key_p) {
 
 
         tmp = **(--node_stack);
-        l_h = tmp->left_branch_ ? tmp->left_branch_->height_ : 0;
-        r_h = tmp->right_branch_ ? tmp->right_branch_->height_ : 0;
+        //l_h = tmp->left_branch_ ? tmp->left_branch_->height_ : 0;
+        //r_h = tmp->right_branch_ ? tmp->right_branch_->height_ : 0;
     }
 
 
