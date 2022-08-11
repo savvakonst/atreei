@@ -116,6 +116,7 @@ struct AvlNode *findAvlNode(struct AvlTree *avl_tree, object_t key) {
         (DST) = r;                                \
     }
 */
+
 #define LIGHT_LEFT_ROTATION(DST, SRC, RIGHT)       \
     struct AvlNode *tmp_0 = (RIGHT)->left_branch_; \
     (RIGHT)->left_branch_ = (SRC);                 \
@@ -172,9 +173,10 @@ struct AvlNode *insertAvlNodeH(struct AvlTree *avl_tree, const object_t *key_p) 
         else return node;
     }
 
-    // get node to inset
+    // create node and fill it
     struct AvlNode *to_insert = newAvlNodeEmpty();
     to_insert->key_ = *key_p;
+
     *stack_item = to_insert;
 
 
@@ -182,6 +184,56 @@ struct AvlNode *insertAvlNodeH(struct AvlTree *avl_tree, const object_t *key_p) 
     struct AvlNode *node = **(--node_stack);
 
     if (node->height_ > 1) return NULL;
+    node->height_ = 2;
+    node = **(--node_stack);
+
+    if (node->height_ > 2) return NULL;
+
+    if(node->right_branch_ == NULL) {
+        struct AvlNode *l = node->left_branch_;
+        if(l->right_branch_) {
+            struct AvlNode *r = l->right_branch_;
+            l->right_branch_ = NULL;
+
+            r->left_branch_ = l;
+            r->right_branch_ = node;
+
+            l->height_ = 1;
+            r->height_ = 2;
+            **node_stack = r;
+        }
+        else{
+            l->right_branch_ = node;
+            **node_stack = l;
+        }
+
+        node->left_branch_ = NULL;
+        node->height_ = 1;
+        return NULL;
+    } else if(node->left_branch_ == NULL){
+        struct AvlNode *r = node->right_branch_;
+        if(r->left_branch_) {
+            struct AvlNode *l = r->left_branch_;
+            r->left_branch_ = NULL;
+
+            l->right_branch_ = r;
+            l->left_branch_ = node;
+
+            r->height_ = 1;
+            l->height_ = 2;
+            **node_stack = l;
+        } else{
+            r->left_branch_ = node;
+            **node_stack = r;
+        }
+
+        node->right_branch_ = NULL;
+        node->height_ = 1;
+        return NULL;
+    }
+
+    node->height_ = 3;
+    node = **(--node_stack);
 
     while (node) {
         int diff = node->left_branch_->height_ - node->right_branch_->height_;
@@ -193,12 +245,13 @@ struct AvlNode *insertAvlNodeH(struct AvlTree *avl_tree, const object_t *key_p) 
 
                 if (l->left_branch_->height_ < l->right_branch_->height_) {  //(simple rot)
                     LEFT_ROTATION(node->left_branch_, l);
+
+                    l->height_ = r->height_;
                     l = r;
                 }
                 LIGHT_RIGHT_ROTATION(**node_stack, node, l);
 
-                node->height_ = node->right_branch_->height_ + 1;
-                l->height_ = temp_h;
+                node->height_ = node->height_ - 1;
 
                 return NULL;
             }
@@ -214,8 +267,7 @@ struct AvlNode *insertAvlNodeH(struct AvlTree *avl_tree, const object_t *key_p) 
                 }
                 LIGHT_LEFT_ROTATION(**node_stack, node, r);
 
-                node->height_ = node->left_branch_->height_ + 1;
-                r->height_ = temp_h;
+                node->height_ = node->height_ - 1;
 
                 return NULL;
             }
