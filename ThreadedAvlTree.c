@@ -24,7 +24,6 @@ struct AvlNode {
 
 
     tree_height_t height_; /**< equal 1 when it has no branches*/
-    height_diff_t diff_;
 };
 
 typedef struct AvlNode **avlNodeStackItem_t;
@@ -60,7 +59,6 @@ struct AvlNode *newAvlNode(object_t key) {
     node->next_ = NULL;
 
     node->height_ = 1;
-    node->diff_ = 0;
 
     return (node);
 }
@@ -240,13 +238,12 @@ struct AvlNode *insertAvlNodeH(struct AvlTree *avl_tree, const object_t *key_p) 
         if (diff > 0) {
             if (diff == 1) node->height_ = node->left_branch_->height_ + 1;
             else {
-                struct AvlNode *l = node->left_branch_;
-                tree_height_t temp_h = node->height_;
-
+                struct AvlNode *l = node->left_branch_; //TODO define 'r' here, and simplify comparison and LEFT_ROTATION
                 if (l->left_branch_->height_ < l->right_branch_->height_) {  //(simple rot)
                     LEFT_ROTATION(node->left_branch_, l);
 
                     l->height_ = r->height_;
+                    r->height_ = node->height_;
                     l = r;
                 }
                 LIGHT_RIGHT_ROTATION(**node_stack, node, l);
@@ -259,10 +256,11 @@ struct AvlNode *insertAvlNodeH(struct AvlTree *avl_tree, const object_t *key_p) 
             if (diff == -1) node->height_ = node->right_branch_->height_ + 1;
             else {
                 struct AvlNode *r = node->right_branch_;
-                tree_height_t temp_h = node->height_;
-
                 if (r->right_branch_->height_ < r->left_branch_->height_) {  //(simple rot)
                     RIGHT_ROTATION(node->right_branch_, r);
+
+                    r->height_ = l->height_;
+                    l->height_ = node->height_;
                     r = l;
                 }
                 LIGHT_LEFT_ROTATION(**node_stack, node, r);
@@ -280,110 +278,7 @@ struct AvlNode *insertAvlNodeH(struct AvlTree *avl_tree, const object_t *key_p) 
 }
 
 
-/**
- *  if equal key exists it returns node pointer without insertion (if equal key
- * exists, developer responsible for insertion), otherwise it creates a new
- * node, inserts that node into the, balances the tree and returns NULL.
- */
-struct AvlNode *insertAvlNodeD(struct AvlTree *avl_tree, const object_t *key_p) {
-    avlNodeStack_t node_stack = avl_tree->stack_;
-    avlNodeStackItem_t stack_item = &(avl_tree->top_node_);
 
-    while (*stack_item != NULL) {
-        *(++node_stack) = stack_item;
-        struct AvlNode *node = *stack_item;
-        if (AVL_KEY_LESS(*key_p, node->key_)) stack_item = &(node->left_branch_);
-        else if (AVL_KEY_LESS(node->key_, *key_p)) stack_item = &(node->right_branch_);
-        else return node;
-    }
-
-    // get node to inset
-    struct AvlNode *last_node = newAvlNodeEmpty();
-    last_node->key_ = *key_p;
-    *stack_item = last_node;
-
-    /*                           *
-     *  diff > 0                 *
-     *         (simple rot)      *         (complex rot)
-     *     \                     *   b  c     a  b
-     *      a  b       \ b  c    *  a \/       \/ c       a b c d
-     *       \/ c  ->   a \/     *   \/ d   ->  \/ d  ->   \/ \/
-     *        \/         \/      *    \/         \/         \ /
-     *
-     *---------------------------+-----------------------------
-     */
-
-    struct AvlNode *node = **(--node_stack);
-
-
-    if (node->height_ > 1) return NULL;
-
-    while (node) {
-        height_diff_t diff = node->diff_ + (height_diff_t) ((node->left_branch_ == last_node) ? 1 : -1);
-
-        if (diff > 0) {
-            if (diff == 1) node->diff_ = 1;
-            else {
-                struct AvlNode *l = node->left_branch_;
-                node->diff_ = 0;
-
-                if (l->diff_ < 0) {  //(simple rot)
-                    LEFT_ROTATION(node->left_branch_, l);
-
-                    if(r->diff_ > 0){
-                        l->diff_ = 0 ; // -1 -> 0
-                        node->diff_ = -1; // 1 -> -1
-                    }else{
-                        l->diff_ = 1 ; // -1 -> 0
-                        node->diff_ = 0; // 1 -> -1
-                    };
-
-                    l = r;
-
-                }
-                LIGHT_RIGHT_ROTATION(**node_stack, node, l);
-
-
-                l->diff_ = 0;
-
-                return NULL;
-            }
-        } else if (diff < 0) {
-            if (diff == -1) node->diff_ = -1;
-            else {
-                struct AvlNode *r = node->right_branch_;
-
-
-                if (r->diff_ > 0) {  //(simple rot)
-                    RIGHT_ROTATION(node->right_branch_, r);
-
-                    if(l->diff_ > 0){
-                        r->diff_ = -1 ;
-                        node->diff_ = 0;
-                    }else{
-                        r->diff_ = 0 ;
-                        node->diff_ = 1;
-                    };
-                    r = l;
-                }
-                LIGHT_LEFT_ROTATION(**node_stack, node, r);
-
-                node->diff_ = 0;
-                r->diff_ = 0;
-
-                return NULL;
-            }
-        } else {
-            node->diff_ = 0;
-            return NULL;
-        }
-
-        last_node = node;
-        node = **(node_stack--);
-    }
-
-    return NULL;
-}
 
 
 struct AvlNode *deleteAvlNode(struct AvlTree *avl_tree, const object_t *key_p) {
