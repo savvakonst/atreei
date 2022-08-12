@@ -303,7 +303,7 @@ struct AvlNode *deleteAvlNode(struct AvlTree *avl_tree, const object_t *key_p) {
 
     // currently, *stack_item points the node to be removed, so **(node_stack-1) points to the previous node.
 
-
+    tree_height_t  h = node_to_delete->height_;
 
     if (node_to_delete->left_branch_ == NULL) {
         *stack_item = node_to_delete->right_branch_;
@@ -323,6 +323,8 @@ struct AvlNode *deleteAvlNode(struct AvlTree *avl_tree, const object_t *key_p) {
             tmp = tmp->right_branch_;
         }
 
+        // *node_stack points to the replaceable node
+        h = tmp->height_;
         // replacing nodes  begin
         *stack_pos_to_insert = &(tmp->left_branch_);
         tmp->right_branch_ = node_to_delete->right_branch_;
@@ -333,12 +335,54 @@ struct AvlNode *deleteAvlNode(struct AvlTree *avl_tree, const object_t *key_p) {
 
         stack_item = *node_stack;
 
-
-        tmp = **(--node_stack);
-        //l_h = tmp->left_branch_ ? tmp->left_branch_->height_ : 0;
-        //r_h = tmp->right_branch_ ? tmp->right_branch_->height_ : 0;
     }
 
+    if( h==1 ){
+        struct AvlNode *node  = **(++node_stack);
+
+        if(node->left_branch_ ) {
+            struct AvlNode *l = node->left_branch_;
+            if(l->right_branch_) {
+                struct AvlNode *r = l->right_branch_;
+                l->right_branch_ = NULL;
+
+                r->left_branch_ = l;
+                r->right_branch_ = node;
+
+                l->height_ = 1;
+                r->height_ = 2;
+                **node_stack = r;
+            }
+            else{
+                l->right_branch_ = node;
+                **node_stack = l;
+            }
+
+            node->left_branch_ = NULL;
+            node->height_ = 1;
+            return NULL;
+        } else {
+            struct AvlNode *r = node->right_branch_;
+            if(r->left_branch_) {
+                struct AvlNode *l = r->left_branch_;
+                r->left_branch_ = NULL;
+
+                l->right_branch_ = r;
+                l->left_branch_ = node;
+
+                r->height_ = 1;
+                l->height_ = 2;
+                **node_stack = l;
+            } else{
+                r->left_branch_ = node;
+                **node_stack = r;
+            }
+
+            node->right_branch_ = NULL;
+            node->height_ = 1;
+            return NULL;
+        }
+    }
 
     return node_to_delete;
 }
