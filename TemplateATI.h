@@ -10,9 +10,11 @@
 #define MAX_AVL_STACK_LENGTH_X64 93
 #define MAX_AVL_STACK_LENGTH_X32 47
 
-#define AVL_KEY_LESS(A_KEY, B_KEY) ((A_KEY) < (B_KEY))
-
-
+//#define TEMPLATE_AVL_KEY_LESS(A_KEY, B_KEY) ((A_KEY) < (B_KEY))
+//#define TEMPLATE_AVL_ALLOCATE(TYPE) ((TYPE *)malloc(sizeof(TYPE)))
+//#define TEMPLATE_AVL_ALLOCATE_ARRAY(TYPE, SIZE) ((TYPE *)malloc(sizeof(TYPE), SIZE))
+//#define TEMPLATE_AVL_DELETE(ARG) (free(ARG))
+//#define TEMPLATE_AVL_DELETE_ARRAY(TYPE, SIZE) (free(ARG))
 
 typedef unsigned char tree_height_t;
 typedef char tree_diff_t;
@@ -113,8 +115,8 @@ typedef char tree_diff_t;
                                                                                                                      \
     /* Create a node*/                                                                                               \
     struct AvlNode##NAME##*newAvlNode##NAME(tree_key_##NAME##_t key, tree_data_##NAME##_t data) {                    \
-        struct AvlNode##NAME##*node = (struct AvlNode##NAME##*)malloc(sizeof(struct AvlNode##NAME));                 \
-                                                                                                                     \
+        /*struct AvlNode##NAME##*node = (struct AvlNode##NAME##*)malloc(sizeof(struct AvlNode##NAME)); */            \
+        struct AvlNode##NAME##*node = TEMPLATE_AVL_ALLOCATE(struct AvlNode##NAME);                                   \
         node->key_ = key;                                                                                            \
         node->data_ = data;                                                                                          \
                                                                                                                      \
@@ -130,7 +132,7 @@ typedef char tree_diff_t;
     }                                                                                                                \
                                                                                                                      \
     struct AvlNode##NAME##*newAvlNode##NAME##Empty() {                                                               \
-        struct AvlNode##NAME##*node = (struct AvlNode##NAME##*)malloc(sizeof(struct AvlNode##NAME));                 \
+        struct AvlNode##NAME##*node = TEMPLATE_AVL_ALLOCATE(struct AvlNode##NAME);                                   \
                                                                                                                      \
         node->left_branch_ = NULL;                                                                                   \
         node->right_branch_ = NULL;                                                                                  \
@@ -144,7 +146,8 @@ typedef char tree_diff_t;
     }                                                                                                                \
                                                                                                                      \
     struct AvlTree##NAME##*newAvlTree##NAME##() {                                                                    \
-        struct AvlTree##NAME##*avl_tree = (struct AvlTree##NAME##*)malloc(sizeof(struct AvlTree##NAME##));           \
+        struct AvlTree##NAME##*avl_tree = TEMPLATE_AVL_ALLOCATE(struct AvlTree##NAME##);                             \
+                                                                                                                     \
         avl_tree->stack_ =                                                                                           \
             (avlNode##NAME##Stack_t)malloc(sizeof(avlNode##NAME##StackItem_t) * MAX_AVL_STACK_LENGTH_X32);           \
         avl_tree->top_node_ = NULL;                                                                                  \
@@ -159,9 +162,9 @@ typedef char tree_diff_t;
         avlNode##NAME##Stack_t node_stack = avl_tree->stack_;                                                        \
                                                                                                                      \
         while (node != NULL) {                                                                                       \
-            if (AVL_KEY_LESS(key, node->key_)) {                                                                     \
+            if (TEMPLATE_AVL_KEY_LESS(key, node->key_)) {                                                            \
                 node = node->left_branch_;                                                                           \
-            } else if (AVL_KEY_LESS(node->key_, key)) {                                                              \
+            } else if (TEMPLATE_AVL_KEY_LESS(node->key_, key)) {                                                     \
                 node = node->left_branch_;                                                                           \
             } else return node;                                                                                      \
         }                                                                                                            \
@@ -181,11 +184,11 @@ typedef char tree_diff_t;
                 if (delete_data_f) delete_data_f(tmp);                                                               \
             }                                                                                                        \
         }                                                                                                            \
-                                                                                                                     \
-        free(avl_tree);                                                                                              \
+        TEMPLATE_AVL_DELETE_ARRAY(avl_tree->stack_);                                                                 \
+        TEMPLATE_AVL_DELETE(avl_tree);                                                                               \
     }                                                                                                                \
                                                                                                                      \
-    void deleteAvlNode##NAME(struct AvlNode##NAME##*node) { free(node); }                                            \
+    /*void deleteAvlNode##NAME(struct AvlNode##NAME##*node) { free(node); }   */                                     \
                                                                                                                      \
                                                                                                                      \
                                                                                                                      \
@@ -214,8 +217,8 @@ typedef char tree_diff_t;
         while (*stack_item != NULL) {                                                                                \
             *(++node_stack) = stack_item;                                                                            \
             struct AvlNode##NAME##*node = *stack_item;                                                               \
-            if (AVL_KEY_LESS(*key_p, node->key_)) stack_item = &(node->left_branch_);                                \
-            else if (AVL_KEY_LESS(node->key_, *key_p)) stack_item = &(node->right_branch_);                          \
+            if (TEMPLATE_AVL_KEY_LESS(*key_p, node->key_)) stack_item = &(node->left_branch_);                       \
+            else if (TEMPLATE_AVL_KEY_LESS(node->key_, *key_p)) stack_item = &(node->right_branch_);                 \
             else return node;                                                                                        \
         }                                                                                                            \
                                                                                                                      \
@@ -353,8 +356,9 @@ typedef char tree_diff_t;
         while (node_to_delete != NULL) {                                                                             \
             *(++node_stack) = stack_item;                                                                            \
                                                                                                                      \
-            if (AVL_KEY_LESS(*key_p, node_to_delete->key_)) stack_item = &(node_to_delete->left_branch_);            \
-            else if (AVL_KEY_LESS(node_to_delete->key_, *key_p)) stack_item = &(node_to_delete->right_branch_);      \
+            if (TEMPLATE_AVL_KEY_LESS(*key_p, node_to_delete->key_)) stack_item = &(node_to_delete->left_branch_);   \
+            else if (TEMPLATE_AVL_KEY_LESS(node_to_delete->key_, *key_p))                                            \
+                stack_item = &(node_to_delete->right_branch_);                                                       \
             else break;                                                                                              \
             node_to_delete = *stack_item;                                                                            \
         }                                                                                                            \

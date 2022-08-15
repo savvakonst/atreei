@@ -16,7 +16,10 @@ typedef void *tree_data_t;
 typedef unsigned char tree_height_t;
 typedef char tree_diff_t;
 
-#define AVL_KEY_LESS(A_KEY, B_KEY) ((A_KEY) < (B_KEY))
+
+//#define AVL_KEY_LESS(A_KEY, B_KEY) ((A_KEY) < (B_KEY))
+#include <string.h>
+#define AVL_KEY_LESS(A_KEY, B_KEY) (strcmp(A_KEY, B_KEY))
 
 struct AvlNode {
     tree_key_t key_;
