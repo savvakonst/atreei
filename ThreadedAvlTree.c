@@ -88,7 +88,7 @@ void deleteAvlTree(struct AvlTree *avl_tree, deleteKeyAndDataF_t delete_data_f) 
             if (delete_data_f) delete_data_f(tmp);
         }
     }
-
+    free(avl_tree->stack_);
     free(avl_tree);
 }
 

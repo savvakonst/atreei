@@ -10,8 +10,8 @@
 
 
 
-typedef int tree_key_t;
-typedef int tree_data_t;
+typedef void *tree_key_t;
+typedef void *tree_data_t;
 
 typedef unsigned char tree_height_t;
 typedef char tree_diff_t;
@@ -51,6 +51,12 @@ struct AvlTree {
 };
 
 struct AvlTree *newAvlTree();
+
+
+/**
+ * frees the memory allocated for avl_tree and its associated nodes, keys and data.
+ */
+void deleteAvlTree(struct AvlTree *avl_tree, deleteKeyAndDataF_t delete_data_f);
 
 /**
  * frees the memory allocated for node structure.
