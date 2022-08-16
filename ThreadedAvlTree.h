@@ -5,21 +5,20 @@
 #define THREADED_AVL_TREE_H
 
 
-#define MAX_AVL_STACK_LENGTH_X64 93
-#define MAX_AVL_STACK_LENGTH_X32 47
 
 
 
-typedef void *tree_key_t;
-typedef void *tree_data_t;
+
+typedef char *tree_key_t;
+typedef char *tree_data_t;
 
 typedef unsigned char tree_height_t;
 typedef char tree_diff_t;
 
-
-//#define AVL_KEY_LESS(A_KEY, B_KEY) ((A_KEY) < (B_KEY))
+#include <stdint.h>
+#define AVL_KEY_LESS(A_KEY, B_KEY) ((uint64_t)(A_KEY) < (uint64_t)(B_KEY))
 #include <string.h>
-#define AVL_KEY_LESS(A_KEY, B_KEY) (strcmp(A_KEY, B_KEY))
+//#define AVL_KEY_LESS(A_KEY, B_KEY) (strcmp(A_KEY, B_KEY))
 
 struct AvlNode {
     tree_key_t key_;
@@ -67,6 +66,9 @@ void deleteAvlTree(struct AvlTree *avl_tree, deleteKeyAndDataF_t delete_data_f);
  */
 void deleteAvlNode(struct AvlNode *node);
 
+
+struct AvlNode * getFirstAvlNode(struct AvlTree *avl_tree) ;
+
 /**
  * if equal key exists it removes node from tree structure and returns pointer to the corresponding node
  */
@@ -77,7 +79,7 @@ struct AvlNode *findAvlNode(struct AvlTree *avl_tree, tree_key_t key);
  * (developer responsible for changing data/insertion.), otherwise it creates a new
  * node, inserts that node into the, balances the tree and returns NULL.
  */
-struct AvlNode *insertAvlNode(struct AvlTree *avl_tree, const tree_key_t *key_p, tree_data_t *data);
+struct AvlNode *insertAvlNode(struct AvlTree *avl_tree, const tree_key_t *key_p, tree_data_t data);
 
 /**
  *  if equal key exists it removes node from tree structure and returns pointer to the corresponding node
