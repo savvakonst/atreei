@@ -402,7 +402,7 @@ struct AvlNode *removeAvlNode(struct AvlTree *avl_tree, const tree_key_t *key_p)
             node->height_ = 1;
         }
     }
-    else node_stack++;
+    //else node_stack++;
 
 
     while (*(--node_stack)) {
