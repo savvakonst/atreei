@@ -13,7 +13,6 @@
 
 
 
-
 // Create a node
 struct AvlNode *newAvlNode(tree_key_t key, tree_data_t data) {
     struct AvlNode *node = (struct AvlNode *)malloc(sizeof(struct AvlNode));
@@ -78,7 +77,6 @@ void deleteAvlTree(struct AvlTree *avl_tree, deleteKeyAndDataF_t delete_data_f) 
 
 
 
-
 struct AvlNode *findAvlNode(struct AvlTree *avl_tree, tree_key_t key) {
     struct AvlNode *node = avl_tree->top_node_;
     avlNodeStack_t node_stack = avl_tree->stack_;
@@ -94,7 +92,7 @@ struct AvlNode *findAvlNode(struct AvlTree *avl_tree, tree_key_t key) {
 }
 
 
-struct AvlNode * getFirstAvlNode(struct AvlTree *avl_tree) {
+struct AvlNode *getFirstAvlNode(struct AvlTree *avl_tree) {
     struct AvlNode *node = avl_tree->top_node_;
 
     if (node)
@@ -154,7 +152,6 @@ struct AvlNode *insertAvlNode(struct AvlTree *avl_tree, const tree_key_t *key_p,
     *(++node_stack) = stack_item;
 
     while (*stack_item != NULL) {
-
         struct AvlNode *node = *stack_item;
         if (AVL_KEY_LESS(*key_p, node->key_)) stack_item = &(node->left_branch_);
         else if (AVL_KEY_LESS(node->key_, *key_p)) stack_item = &(node->right_branch_);
@@ -179,23 +176,21 @@ struct AvlNode *insertAvlNode(struct AvlTree *avl_tree, const tree_key_t *key_p,
         to_insert->next_ = node;
         to_insert->previous_ = node->previous_;
         node->previous_ = to_insert;
-        if(to_insert->previous_)
-            to_insert->previous_->next_ = to_insert;
+        if (to_insert->previous_) to_insert->previous_->next_ = to_insert;
     } else {
         to_insert->previous_ = node;
         to_insert->next_ = node->next_;
         node->next_ = to_insert;
-        if(to_insert->next_)
-            to_insert->next_->previous_ = to_insert;
+        if (to_insert->next_) to_insert->next_->previous_ = to_insert;
     }
 
 
 
     if (node->height_ > 1) return NULL;
     node->height_ = 2;
-    //node = **(--node_stack);
+    // node = **(--node_stack);
 
-    if (*(--node_stack)==NULL || (**node_stack)->height_ > 2) return NULL;
+    if (*(--node_stack) == NULL || (**node_stack)->height_ > 2) return NULL;
 
     node = **(node_stack);
 
@@ -402,7 +397,7 @@ struct AvlNode *removeAvlNode(struct AvlTree *avl_tree, const tree_key_t *key_p)
             node->height_ = 1;
         }
     }
-    //else node_stack++;
+    // else node_stack++;
 
 
     while (*(--node_stack)) {
@@ -442,7 +437,11 @@ struct AvlNode *removeAvlNode(struct AvlTree *avl_tree, const tree_key_t *key_p)
 
                 node->height_ = h_tmp + 1;
             }
-        } else return NULL;
+        } else {
+            node->height_ = node->left_branch_->height_ - 1;
+            // if ( tmp ==
+            // return NULL;
+        };
 
         // node = **(node_stack--);
     }
