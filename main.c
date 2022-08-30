@@ -3,6 +3,7 @@
 //
 #include "ThreadedAvlTree.h"
 //
+#include <stdarg.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -10,16 +11,19 @@
 #include <sys/timeb.h>
 #include <time.h>
 
-
 #define KEY_SIZE 1
 
 #define DATA_SIZE 50
 
+
+#define PRINT_F( ...) \
+    { printf(__VA_ARGS__); fflush(stdout);}
+
 int walkPrint(struct AvlNode* node) {
     if (node->left_branch_) walkPrint(node->left_branch_);
 
-    printf("w %04d \n", (uint64_t)node->key_);
-    fflush(stdout);
+    PRINT_F("w %04d \n", (uint64_t)node->key_);
+
 
     if (node->right_branch_) walkPrint(node->right_branch_);
 }
@@ -29,16 +33,18 @@ int walkValidateHeight(struct AvlNode* node, int* cnt) {
     char left = node->left_branch_ ? node->left_branch_->height_ : 0;
     char right = node->right_branch_ ? node->right_branch_->height_ : 0;
     if ((max(left, right) + 1) != (node->height_)) {
-        printf("\033[0;31m");
-        fprintf(stdout, "error on : pos= %d  (top= %d  left= %d  right= %d )\n", (*cnt), node->height_, left, right);
-        printf("\033[0m");
-        fflush(stdout);
+        PRINT_F("\033[0;31m");
+        PRINT_F( "error on : pos= %d  (top= %d  left= %d  right= %d )\n", (*cnt), node->height_, left, right);
+        PRINT_F("\033[0m");
+
     }
     if (node->right_branch_) walkValidateHeight(node->right_branch_, cnt);
 
     (*cnt)++;
     return 0;
 }
+
+
 
 int main(int argc, char* argv[]) {
     struct AvlTree* tree = newAvlTree();
@@ -62,14 +68,14 @@ int main(int argc, char* argv[]) {
 
     struct AvlNode* node = getFirstAvlNode(tree);
     walkPrint(tree->top_node_);
-    printf(" --------------------------------\n");
+    PRINT_F(" --------------------------------\n");
 
     {
         int c = 0;
         walkValidateHeight(tree->top_node_, &c);
     }
 
-    printf(" --------------------------------\n");
+    PRINT_F(" --------------------------------\n");
 
     int cnt = 0;
     while (node && cnt < 20) {
@@ -79,13 +85,15 @@ int main(int argc, char* argv[]) {
         node = node->next_;
         removeAvlNode(tree, &node->previous_->key_);
         int c = 0;
-        printf("deletion N: %d\n", cnt);
-        fflush(stdout);
+
+        PRINT_F("deletion N: %d\n", cnt);
+
 
 
         walkValidateHeight(tree->top_node_, &c);
-        printf(" \n");
-        fflush(stdout);
+
+        PRINT_F(" \n");
+
 
 
         cnt++;
@@ -93,14 +101,14 @@ int main(int argc, char* argv[]) {
 
 
     printf(" --------------------------------\n");
-    fflush(stdout);
+
 
     node = getFirstAvlNode(tree);
     cnt = 0;
     while (node) {
-        printf("%04d", cnt);
-        printf("   %04d \n", (uint64_t)node->key_);
-        fflush(stdout);
+        PRINT_F("%04d", cnt);
+        PRINT_F("   %04d \n", (uint64_t)node->key_);
+
         node = node->next_;
         cnt++;
     }
