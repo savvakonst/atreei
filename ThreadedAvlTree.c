@@ -287,6 +287,19 @@ struct AvlNode *insertAvlNode(struct AvlTree *avl_tree, const tree_key_t *key_p,
 }
 
 
+
+#ifdef _DEBUG
+#    include <stdio.h>
+#    define D_COMMA ,
+#    define DEBUG_PRINT(X) \
+        printf(X);         \
+        fflush(stdout);
+
+#else
+#    define D_COMMA
+#    define DEBUG_PRINT(X)
+#endif
+
 struct AvlNode *removeAvlNode(struct AvlTree *avl_tree, const tree_key_t *key_p) {
     avlNodeStack_t node_stack = avl_tree->stack_;
     avlNodeStackItem_t stack_item = &(avl_tree->top_node_);
@@ -316,6 +329,7 @@ struct AvlNode *removeAvlNode(struct AvlTree *avl_tree, const tree_key_t *key_p)
 
     tree_height_t h = node_to_delete->height_;
 
+    DEBUG_PRINT("deletion type determination: ");
     if (node_to_delete->left_branch_ == NULL) {
         *stack_item = node_to_delete->right_branch_;
         // if (node_to_delete->right_branch_ == NULL) {
@@ -323,9 +337,12 @@ struct AvlNode *removeAvlNode(struct AvlTree *avl_tree, const tree_key_t *key_p)
         //     struct AvlNode *tmp = *stack_item;
         //     if ((tmp->left_branch_ == NULL) || (tmp->right_branch_ == NULL)) tmp->height_ = 1;
         // }
+        DEBUG_PRINT("left branch is empty\n");
     } else if (node_to_delete->right_branch_ == NULL) {
         *stack_item = node_to_delete->left_branch_;
+        DEBUG_PRINT("right branch is empty\n");
     } else {
+        DEBUG_PRINT("both subbranches exist\n");
         avlNodeStackItem_t *stack_pos_to_insert = ++node_stack;
 
         struct AvlNode *tmp = node_to_delete->left_branch_;
@@ -350,13 +367,16 @@ struct AvlNode *removeAvlNode(struct AvlTree *avl_tree, const tree_key_t *key_p)
     if (*(--node_stack) == NULL) return node_to_delete;
 
     struct AvlNode *node = **node_stack;
-
+    DEBUG_PRINT("first step: ");
     if (h == 1) {
+        DEBUG_PRINT("h == 1\n");
         if (node->height_ == 2) {
+            DEBUG_PRINT("simple no rotation \n");
             if (node->left_branch_ == NULL && node->right_branch_ == NULL) node->height_ = 1;
         } else if (node->left_branch_) {
             struct AvlNode *l = node->left_branch_;
             if (l->right_branch_) {
+                DEBUG_PRINT("simple double right rotation \n");
                 struct AvlNode *r = l->right_branch_;
                 l->right_branch_ = NULL;
 
@@ -368,6 +388,7 @@ struct AvlNode *removeAvlNode(struct AvlTree *avl_tree, const tree_key_t *key_p)
                 r->height_ = l->height_ + 1;
                 **node_stack = r;
             } else {
+                DEBUG_PRINT("simple right rotation \n");
                 l->right_branch_ = node;
                 **node_stack = l;
             }
@@ -378,6 +399,7 @@ struct AvlNode *removeAvlNode(struct AvlTree *avl_tree, const tree_key_t *key_p)
         } else {
             struct AvlNode *r = node->right_branch_;
             if (r->left_branch_) {
+                DEBUG_PRINT("simple double left rotation \n");
                 struct AvlNode *l = r->left_branch_;
                 r->left_branch_ = NULL;
 
@@ -389,6 +411,7 @@ struct AvlNode *removeAvlNode(struct AvlTree *avl_tree, const tree_key_t *key_p)
                 l->height_ = r->height_ + 1;
                 **node_stack = l;
             } else {
+                DEBUG_PRINT("simple left rotation \n");
                 r->left_branch_ = node;
                 **node_stack = r;
             }
@@ -396,49 +419,60 @@ struct AvlNode *removeAvlNode(struct AvlTree *avl_tree, const tree_key_t *key_p)
             node->right_branch_ = NULL;
             node->height_ = 1;
         }
+    } else {
+        DEBUG_PRINT("h == %d\n" D_COMMA h);
+        node_stack++;
     }
-    // else node_stack++;
 
 
     while (*(--node_stack)) {
+        DEBUG_PRINT("next step: ");
         node = **node_stack;
 
         int diff = node->left_branch_->height_ - node->right_branch_->height_;
         if (diff > 0) {
-            if (diff == 1) node->height_ = node->left_branch_->height_ + 1;
-            else {
+            if (diff == 1) {
+                DEBUG_PRINT("|diff| == 1\n");
+                return node_to_delete;  // node->height_ = node->left_branch_->height_ + 1;
+
+            } else {
                 struct AvlNode *l = node->left_branch_;
-                tree_height_t h_tmp = node->right_branch_->height_;
+                tree_height_t h_tmp = l->right_branch_->height_;
                 // TODO define 'r' here, and simplify comparison and LEFT_ROTATION
                 if (l->left_branch_->height_ < l->right_branch_->height_) {  //(simple rot)
                     LEFT_ROTATION(node->left_branch_, l);
-
+                    DEBUG_PRINT("double ");
                     l->height_ = r->height_;
                     r->height_ = r->height_ + 1;
                     l = r;
                 }
                 LIGHT_RIGHT_ROTATION(**node_stack, node, l);
-
+                DEBUG_PRINT("right rotation\n");
                 node->height_ = h_tmp + 1;
+                l->height_ = node->height_ + 1;
             }
         } else if (diff < 0) {
-            if (diff == -1) node->height_ = node->right_branch_->height_ + 1;
-            else {
+            if (diff == -1) {
+                DEBUG_PRINT("|diff| == 1\n");
+                return node_to_delete;  // node->height_ = node->right_branch_->height_ + 1;
+            } else {
                 struct AvlNode *r = node->right_branch_;
-                tree_height_t h_tmp = node->left_branch_->height_;
+                tree_height_t h_tmp = r->left_branch_->height_;
                 if (r->right_branch_->height_ < r->left_branch_->height_) {  //(simple rot)
                     RIGHT_ROTATION(node->right_branch_, r);
-
+                    DEBUG_PRINT("double ");
                     r->height_ = l->height_;
                     l->height_ = l->height_ + 1;
                     r = l;
                 }
                 LIGHT_LEFT_ROTATION(**node_stack, node, r);
-
+                DEBUG_PRINT("left rotation\n");
                 node->height_ = h_tmp + 1;
+                r->height_ = node->height_ + 1;
             }
         } else {
-            node->height_ = node->left_branch_->height_ - 1;
+            DEBUG_PRINT("diff == 0\n");
+            node->height_ = node->left_branch_->height_ + 1;
             // if ( tmp ==
             // return NULL;
         };
@@ -446,5 +480,6 @@ struct AvlNode *removeAvlNode(struct AvlTree *avl_tree, const tree_key_t *key_p)
         // node = **(node_stack--);
     }
 
+    DEBUG_PRINT("exit from root : \n");
     return node_to_delete;
 }
