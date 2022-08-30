@@ -58,12 +58,19 @@ int main(int argc, char* argv[]) {
         insertAvlNode(tree, &random, NULL);
     }
 
+
+
     struct AvlNode* node = getFirstAvlNode(tree);
     walkPrint(tree->top_node_);
+    printf(" --------------------------------\n");
+
     {
         int c = 0;
         walkValidateHeight(tree->top_node_, &c);
     }
+
+    printf(" --------------------------------\n");
+
     int cnt = 0;
     while (node && cnt < 20) {
         // printf("%04d", (uint64_t)node->key_);
@@ -74,9 +81,13 @@ int main(int argc, char* argv[]) {
         int c = 0;
         printf("deletion N: %d\n", cnt);
         fflush(stdout);
+
+
         walkValidateHeight(tree->top_node_, &c);
         printf(" \n");
         fflush(stdout);
+
+
         cnt++;
     }
 
@@ -87,8 +98,8 @@ int main(int argc, char* argv[]) {
     node = getFirstAvlNode(tree);
     cnt = 0;
     while (node) {
-        printf("%04d", (uint64_t)node->key_);
-        printf("   %d \n", cnt);
+        printf("%04d", cnt);
+        printf("   %04d \n", (uint64_t)node->key_);
         fflush(stdout);
         node = node->next_;
         cnt++;
