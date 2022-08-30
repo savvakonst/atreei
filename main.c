@@ -16,8 +16,11 @@
 #define DATA_SIZE 50
 
 
-#define PRINT_F( ...) \
-    { printf(__VA_ARGS__); fflush(stdout);}
+#define PRINT_F(...)         \
+    {                        \
+        printf(__VA_ARGS__); \
+        fflush(stdout);      \
+    }
 
 int walkPrint(struct AvlNode* node) {
     if (node->left_branch_) walkPrint(node->left_branch_);
@@ -33,10 +36,8 @@ int walkValidateHeight(struct AvlNode* node, int* cnt) {
     char left = node->left_branch_ ? node->left_branch_->height_ : 0;
     char right = node->right_branch_ ? node->right_branch_->height_ : 0;
     if ((max(left, right) + 1) != (node->height_)) {
-        PRINT_F("\033[0;31m");
-        PRINT_F( "error on : pos= %d  (top= %d  left= %d  right= %d )\n", (*cnt), node->height_, left, right);
-        PRINT_F("\033[0m");
-
+        PRINT_F("\033[0;31m error on : pos= %d  (top= %d  left= %d  right= %d ) \033[0m\n", (*cnt), node->height_, left,
+                right);
     }
     if (node->right_branch_) walkValidateHeight(node->right_branch_, cnt);
 
@@ -100,14 +101,13 @@ int main(int argc, char* argv[]) {
     }
 
 
-    printf(" --------------------------------\n");
+    PRINT_F(" --------------------------------\n");
 
 
     node = getFirstAvlNode(tree);
     cnt = 0;
     while (node) {
-        PRINT_F("%04d", cnt);
-        PRINT_F("   %04d \n", (uint64_t)node->key_);
+        PRINT_F("%04d   %04d \n", cnt, (uint64_t)node->key_);
 
         node = node->next_;
         cnt++;
