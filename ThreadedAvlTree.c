@@ -306,14 +306,15 @@ struct AvlNode *insertAvlNode(struct AvlTree *avl_tree, const tree_key_t *key_p,
     }
 #ifdef SIZE_SUPPORT
 size_treatment:
-    while (*(--node_stack)) {
+    while (*node_stack) {
         node = **node_stack;
         node->size_++;
+        node_stack--;
     }
 #endif
 
     return NULL;
-#undef RETURN_OR_BREAK
+#undef FINISH_TREATMENT
 }
 
 
