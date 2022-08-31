@@ -13,7 +13,7 @@
 
 #define KEY_SIZE 1
 
-#define DATA_SIZE 50
+#define DATA_SIZE 500
 
 
 #define PRINT_F(...)         \

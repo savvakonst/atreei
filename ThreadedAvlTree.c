@@ -11,7 +11,17 @@
 #define MAX_AVL_STACK_LENGTH_X64 93
 #define MAX_AVL_STACK_LENGTH_X32 47
 
+#ifdef _DEBUG
+#    include <stdio.h>
+#    define D_COMMA ,
+#    define DEBUG_PRINT(X) \
+        printf(X);         \
+        fflush(stdout);
 
+#else
+#    define D_COMMA
+#    define DEBUG_PRINT(X)
+#endif
 
 // Create a node
 struct AvlNode *newAvlNode(tree_key_t key, tree_data_t data) {
@@ -42,6 +52,10 @@ struct AvlNode *newAvlNodeEmpty() {
     node->previous_ = NULL;
 
     node->height_ = 1;
+#ifdef SIZE_SUPPORT
+    node->size_ = 1;
+#endif
+
 
     return (node);
 }
@@ -184,13 +198,17 @@ struct AvlNode *insertAvlNode(struct AvlTree *avl_tree, const tree_key_t *key_p,
         if (to_insert->next_) to_insert->next_->previous_ = to_insert;
     }
 
+#ifdef SIZE_SUPPORT
+#    define FINISH_TREATMENT goto size_treatment
+#else
+#    define FINISH_TREATMENT return NULL
+#endif
 
-
-    if (node->height_ > 1) return NULL;
+    if (node->height_ > 1) FINISH_TREATMENT;
     node->height_ = 2;
     // node = **(--node_stack);
 
-    if (*(--node_stack) == NULL || (**node_stack)->height_ > 2) return NULL;
+    if (*(--node_stack) == NULL || (**node_stack)->height_ > 2) FINISH_TREATMENT;
 
     node = **(node_stack);
 
@@ -213,7 +231,7 @@ struct AvlNode *insertAvlNode(struct AvlTree *avl_tree, const tree_key_t *key_p,
 
         node->left_branch_ = NULL;
         node->height_ = 1;
-        return NULL;
+        FINISH_TREATMENT;
     } else if (node->left_branch_ == NULL) {
         struct AvlNode *r = node->right_branch_;
         if (r->left_branch_) {
@@ -233,15 +251,19 @@ struct AvlNode *insertAvlNode(struct AvlTree *avl_tree, const tree_key_t *key_p,
 
         node->right_branch_ = NULL;
         node->height_ = 1;
-        return NULL;
+        FINISH_TREATMENT;
     }
 
     node->height_ = 3;
     // node = **(--node_stack);
 
+
+
     while (*(--node_stack)) {
         node = **node_stack;
-
+#ifdef SIZE_SUPPORT
+        node->size_++;
+#endif
         int diff = node->left_branch_->height_ - node->right_branch_->height_;
         if (diff > 0) {
             if (diff == 1) node->height_ = node->left_branch_->height_ + 1;
@@ -259,7 +281,7 @@ struct AvlNode *insertAvlNode(struct AvlTree *avl_tree, const tree_key_t *key_p,
 
                 node->height_ = node->height_ - 1;
 
-                return NULL;
+                FINISH_TREATMENT;
             }
         } else if (diff < 0) {
             if (diff == -1) node->height_ = node->right_branch_->height_ + 1;
@@ -276,29 +298,25 @@ struct AvlNode *insertAvlNode(struct AvlTree *avl_tree, const tree_key_t *key_p,
 
                 node->height_ = node->height_ - 1;
 
-                return NULL;
+                FINISH_TREATMENT;
             }
-        } else return NULL;
+        } else FINISH_TREATMENT;
 
         // node = **(node_stack--);
     }
+#ifdef SIZE_SUPPORT
+size_treatment:
+    while (*(--node_stack)) {
+        node = **node_stack;
+        node->size_++;
+    }
+#endif
 
     return NULL;
+#undef RETURN_OR_BREAK
 }
 
 
-
-#ifdef _DEBUG
-#    include <stdio.h>
-#    define D_COMMA ,
-#    define DEBUG_PRINT(X) \
-        printf(X);         \
-        fflush(stdout);
-
-#else
-#    define D_COMMA
-#    define DEBUG_PRINT(X)
-#endif
 
 struct AvlNode *removeAvlNode(struct AvlTree *avl_tree, const tree_key_t *key_p) {
     avlNodeStack_t node_stack = avl_tree->stack_;
@@ -323,24 +341,17 @@ struct AvlNode *removeAvlNode(struct AvlTree *avl_tree, const tree_key_t *key_p)
 
     if (node_to_delete->previous_) node_to_delete->previous_->next_ = node_to_delete->next_;
 
-    // struct AvlNode * const node_to_delete = node;
-
     // currently, *stack_item points the node to be removed, so **(node_stack-1) points to the previous node.
 
     tree_height_t h = node_to_delete->height_;
 
     DEBUG_PRINT("deletion type determination: ");
     if (node_to_delete->left_branch_ == NULL) {
-        *stack_item = node_to_delete->right_branch_;
-        // if (node_to_delete->right_branch_ == NULL) {
-        //     stack_item = *(--node_stack);
-        //     struct AvlNode *tmp = *stack_item;
-        //     if ((tmp->left_branch_ == NULL) || (tmp->right_branch_ == NULL)) tmp->height_ = 1;
-        // }
         DEBUG_PRINT("left branch is empty\n");
+        *stack_item = node_to_delete->right_branch_;
     } else if (node_to_delete->right_branch_ == NULL) {
-        *stack_item = node_to_delete->left_branch_;
         DEBUG_PRINT("right branch is empty\n");
+        *stack_item = node_to_delete->left_branch_;
     } else {
         DEBUG_PRINT("both subbranches exist\n");
         avlNodeStackItem_t *stack_pos_to_insert = ++node_stack;
@@ -363,10 +374,6 @@ struct AvlNode *removeAvlNode(struct AvlTree *avl_tree, const tree_key_t *key_p)
         tmp->right_branch_ = node_to_delete->right_branch_;
         tmp->left_branch_ = node_to_delete->left_branch_;
         *stack_item = tmp;
-
-        // replacing nodes  finish
-        //**node_stack++;
-        // stack_item = *node_stack;
     }
 
     if (*(--node_stack) == NULL) return node_to_delete;
@@ -449,7 +456,7 @@ struct AvlNode *removeAvlNode(struct AvlTree *avl_tree, const tree_key_t *key_p)
                     DEBUG_PRINT("double ");
                     l->height_ = r->height_;
                     h_tmp = node->right_branch_->height_;
-                    // r->height_ = r->height_ + 1;
+
                     l = r;
                 }
                 LIGHT_RIGHT_ROTATION(**node_stack, node, l);
@@ -469,7 +476,6 @@ struct AvlNode *removeAvlNode(struct AvlTree *avl_tree, const tree_key_t *key_p)
                     DEBUG_PRINT("double ");
                     r->height_ = l->height_;
                     h_tmp = node->left_branch_->height_;
-                    // l->height_ = l->height_ + 1;
                     r = l;
                 }
                 LIGHT_LEFT_ROTATION(**node_stack, node, r);
@@ -480,11 +486,7 @@ struct AvlNode *removeAvlNode(struct AvlTree *avl_tree, const tree_key_t *key_p)
         } else {
             DEBUG_PRINT("diff == 0\n");
             node->height_ = node->left_branch_->height_ + 1;
-            // if ( tmp ==
-            // return NULL;
         };
-
-        // node = **(node_stack--);
     }
 
     DEBUG_PRINT("exit from root : \n");

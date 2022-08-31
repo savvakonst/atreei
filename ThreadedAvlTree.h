@@ -4,10 +4,8 @@
 #ifndef THREADED_AVL_TREE_H
 #define THREADED_AVL_TREE_H
 
-
-
-
-
+#include <stdint.h>
+#include <string.h>
 
 typedef char *tree_key_t;
 typedef char *tree_data_t;
@@ -15,14 +13,22 @@ typedef char *tree_data_t;
 typedef unsigned char tree_height_t;
 typedef char tree_diff_t;
 
-#include <stdint.h>
+
+
 #define AVL_KEY_LESS(A_KEY, B_KEY) ((uint64_t)(A_KEY) < (uint64_t)(B_KEY))
-#include <string.h>
 //#define AVL_KEY_LESS(A_KEY, B_KEY) (strcmp(A_KEY, B_KEY))
+
+
+#define SIZE_SUPPORT
 
 struct AvlNode {
     tree_key_t key_;
     tree_data_t data_;
+
+#ifdef SIZE_SUPPORT
+    size_t size_;
+#endif
+
 
     struct AvlNode *left_branch_;  /**< key_ of left_branch_ is less then current */
     struct AvlNode *right_branch_; /**< key_ of right_branch_ is more then current */
@@ -67,7 +73,7 @@ void deleteAvlTree(struct AvlTree *avl_tree, deleteKeyAndDataF_t delete_data_f);
 void deleteAvlNode(struct AvlNode *node);
 
 
-struct AvlNode * getFirstAvlNode(struct AvlTree *avl_tree) ;
+struct AvlNode *getFirstAvlNode(struct AvlTree *avl_tree);
 
 /**
  * if equal key exists it removes node from tree structure and returns pointer to the corresponding node
