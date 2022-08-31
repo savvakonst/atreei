@@ -345,6 +345,8 @@ struct AvlNode *removeAvlNode(struct AvlTree *avl_tree, const tree_key_t *key_p)
         DEBUG_PRINT("both subbranches exist\n");
         avlNodeStackItem_t *stack_pos_to_insert = ++node_stack;
 
+        *stack_pos_to_insert = &(node_to_delete->left_branch_);
+
         struct AvlNode *tmp = node_to_delete->left_branch_;
         while (tmp->right_branch_) {
             *(++node_stack) = &(tmp->right_branch_);
@@ -353,15 +355,18 @@ struct AvlNode *removeAvlNode(struct AvlTree *avl_tree, const tree_key_t *key_p)
 
         // *node_stack points to the replaceable node
         h = tmp->height_;
+        tmp->height_ = node_to_delete->height_;
         // replacing nodes  begin
-        *stack_pos_to_insert = &(tmp->left_branch_);
-        tmp->right_branch_ = node_to_delete->right_branch_;
         **node_stack = tmp->left_branch_;
+        *stack_pos_to_insert = &(tmp->left_branch_);
+
+        tmp->right_branch_ = node_to_delete->right_branch_;
         tmp->left_branch_ = node_to_delete->left_branch_;
         *stack_item = tmp;
-        // replacing nodes  finish
 
-        stack_item = *node_stack;
+        // replacing nodes  finish
+        //**node_stack++;
+        // stack_item = *node_stack;
     }
 
     if (*(--node_stack) == NULL) return node_to_delete;
@@ -443,7 +448,8 @@ struct AvlNode *removeAvlNode(struct AvlTree *avl_tree, const tree_key_t *key_p)
                     LEFT_ROTATION(node->left_branch_, l);
                     DEBUG_PRINT("double ");
                     l->height_ = r->height_;
-                    r->height_ = r->height_ + 1;
+                    h_tmp = node->right_branch_->height_;
+                    // r->height_ = r->height_ + 1;
                     l = r;
                 }
                 LIGHT_RIGHT_ROTATION(**node_stack, node, l);
@@ -462,7 +468,8 @@ struct AvlNode *removeAvlNode(struct AvlTree *avl_tree, const tree_key_t *key_p)
                     RIGHT_ROTATION(node->right_branch_, r);
                     DEBUG_PRINT("double ");
                     r->height_ = l->height_;
-                    l->height_ = l->height_ + 1;
+                    h_tmp = node->left_branch_->height_;
+                    // l->height_ = l->height_ + 1;
                     r = l;
                 }
                 LIGHT_LEFT_ROTATION(**node_stack, node, r);

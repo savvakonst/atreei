@@ -31,25 +31,68 @@ int walkPrint(struct AvlNode* node) {
     if (node->right_branch_) walkPrint(node->right_branch_);
 }
 
-int walkValidateHeight(struct AvlNode* node, int* cnt) {
-    if (node->left_branch_) walkValidateHeight(node->left_branch_, cnt);
+int walkValidateHeight_(struct AvlNode* node, int* cnt) {
+    if (node == NULL) return 0;
+    if (node->left_branch_) walkValidateHeight_(node->left_branch_, cnt);
     char left = node->left_branch_ ? node->left_branch_->height_ : 0;
     char right = node->right_branch_ ? node->right_branch_->height_ : 0;
     if ((max(left, right) + 1) != (node->height_)) {
         PRINT_F("\033[0;31m error on : pos= %d  (top= %d  left= %d  right= %d ) \033[0m\n", (*cnt), node->height_, left,
                 right);
     }
-    if (node->right_branch_) walkValidateHeight(node->right_branch_, cnt);
+    if (node->right_branch_) walkValidateHeight_(node->right_branch_, cnt);
 
     (*cnt)++;
     return 0;
 }
+#define walkValidateHeight(NODE)       \
+    {                                  \
+        int c = 0;                     \
+        walkValidateHeight_(NODE, &c); \
+    }
+// int walkValidateHeight(struct AvlNode* node) {
+//     int c = 0;
+//     return walkValidateHeight_(node, &c);
+// }
 
 
+
+void printNodeDot(struct AvlNode* node, FILE* stream) {
+    fprintf(stream, "    %llu [label = \"%llu, %llu\" ];\n", (uint64_t)node->key_, (uint64_t)node->key_,
+            (uint64_t)node->height_);
+
+    if (node->left_branch_) {
+        fprintf(stream, "    %llu -> %llu;\n", (uint64_t)node->key_, (uint64_t)node->left_branch_->key_);
+        printNodeDot(node->left_branch_, stream);
+    }
+
+    if (node->right_branch_) {
+        fprintf(stream, "    %llu -> %llu;\n", (uint64_t)node->key_, (uint64_t)node->right_branch_->key_);
+        printNodeDot(node->right_branch_, stream);
+    }
+}
+
+void printTreeDot(struct AvlNode* top_node, FILE* stream) {
+    fprintf(stream, "digraph BinaryTree {\n");
+    fprintf(stream, "    node [fontname=\"Arial\"];\n rankdir=\"BT\";\n");
+
+    if (!top_node) fprintf(stream, "\n");
+    else if (!top_node->right_branch_ && !top_node->left_branch_)
+        fprintf(stream, "    %llu;\n", (uint64_t)top_node->key_);
+    else printNodeDot(top_node, stream);
+
+    fprintf(stream, "}\n");
+}
+
+
+
+typedef uint64_t test_data_type_t;
 
 int main(int argc, char* argv[]) {
     struct AvlTree* tree = newAvlTree();
 
+    test_data_type_t* data_array = malloc(sizeof(test_data_type_t) * DATA_SIZE);
+    test_data_type_t* ptr = data_array;
     for (int i = 0; i < DATA_SIZE; i++) {
         // unsigned char* name = (unsigned char*)malloc(KEY_SIZE+1);
         // do {
@@ -60,57 +103,78 @@ int main(int argc, char* argv[]) {
         //
         //            name[KEY_SIZE] = 0;
         //        } while (findAvlNode(tree, name) != NULL);
-        uint64_t random = (unsigned long)rand();
 
-        insertAvlNode(tree, &random, NULL);
+        test_data_type_t random = (unsigned long)rand();  // NOLINT(cert-msc30-c, cert-msc50-cpp)
+        *(ptr++) = random;
+        PRINT_F("random N: %llu\n", random);
+        insertAvlNode(tree, (const tree_key_t*)&random, NULL);
+    }
+
+    PRINT_F(" --------------------------------\n");
+
+    for (int i = DATA_SIZE; i > 0;) {
+        uint64_t random_index = ((unsigned long)rand()) % i;  // NOLINT(cert-msc30-c, cert-msc50-cpp)
+        i--;
+        test_data_type_t temp_data = *(data_array + i);
+        *(data_array + i) = *(data_array + random_index);
+        *(data_array + random_index) = temp_data;
     }
 
 
 
-    struct AvlNode* node = getFirstAvlNode(tree);
+    for (int i = 0; i < DATA_SIZE; i++) {
+        PRINT_F("random N: %llu\n", *(data_array + i));
+    }
+
+    PRINT_F(" --------------------------------\n");
+
+
     walkPrint(tree->top_node_);
     PRINT_F(" --------------------------------\n");
 
+
+
+    if (1) {
+        for (int i = 0; i < DATA_SIZE; i++) {
+            test_data_type_t temp_data = *(data_array + i);
+            removeAvlNode(tree, &temp_data);
+
+            PRINT_F("deletion N: %d\n", i);
+            walkValidateHeight(tree->top_node_);
+
+
+            PRINT_F(" \n");
+        }
+    } else {
+        struct AvlNode* node = getFirstAvlNode(tree);
+        walkValidateHeight(tree->top_node_);
+        int cnt = 0;
+        while (node && cnt < 20) {
+            node = node->next_;
+            removeAvlNode(tree, &node->previous_->key_);
+
+            PRINT_F("deletion N: %d\n", cnt);
+
+            walkValidateHeight(tree->top_node_);
+
+            PRINT_F(" \n");
+
+            cnt++;
+        }
+    }
+
+    PRINT_F(" --------------------------------\n");
+
+
     {
-        int c = 0;
-        walkValidateHeight(tree->top_node_, &c);
-    }
+        struct AvlNode* node = getFirstAvlNode(tree);
+        int cnt = 0;
+        while (node) {
+            PRINT_F("%04d   %06llu \n", cnt, (uint64_t)node->key_);
 
-    PRINT_F(" --------------------------------\n");
-
-    int cnt = 0;
-    while (node && cnt < 20) {
-        // printf("%04d", (uint64_t)node->key_);
-        // printf("   %d \n",cnt);
-
-        node = node->next_;
-        removeAvlNode(tree, &node->previous_->key_);
-        int c = 0;
-
-        PRINT_F("deletion N: %d\n", cnt);
-
-
-
-        walkValidateHeight(tree->top_node_, &c);
-
-        PRINT_F(" \n");
-
-
-
-        cnt++;
-    }
-
-
-    PRINT_F(" --------------------------------\n");
-
-
-    node = getFirstAvlNode(tree);
-    cnt = 0;
-    while (node) {
-        PRINT_F("%04d   %04d \n", cnt, (uint64_t)node->key_);
-
-        node = node->next_;
-        cnt++;
+            node = node->next_;
+            cnt++;
+        }
     }
 
 
