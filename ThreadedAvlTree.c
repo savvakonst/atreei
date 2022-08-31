@@ -200,10 +200,12 @@ struct AvlNode *insertAvlNode(struct AvlTree *avl_tree, const tree_key_t *key_p,
 
 #ifdef SIZE_SUPPORT
 #    define FINISH_TREATMENT goto size_treatment
+#    define SIZE_INCREMENT node->size_++
 #else
 #    define FINISH_TREATMENT return NULL
+#    define SIZE_INCREMENT node->size_++
 #endif
-
+    
     if (node->height_ > 1) FINISH_TREATMENT;
     node->height_ = 2;
     // node = **(--node_stack);
@@ -211,6 +213,7 @@ struct AvlNode *insertAvlNode(struct AvlTree *avl_tree, const tree_key_t *key_p,
     if (*(--node_stack) == NULL || (**node_stack)->height_ > 2) FINISH_TREATMENT;
 
     node = **(node_stack);
+    SIZE_INCREMENT;
 
     if (node->right_branch_ == NULL) {
         struct AvlNode *l = node->left_branch_;
@@ -261,9 +264,8 @@ struct AvlNode *insertAvlNode(struct AvlTree *avl_tree, const tree_key_t *key_p,
 
     while (*(--node_stack)) {
         node = **node_stack;
-#ifdef SIZE_SUPPORT
-        node->size_++;
-#endif
+        SIZE_INCREMENT;
+
         int diff = node->left_branch_->height_ - node->right_branch_->height_;
         if (diff > 0) {
             if (diff == 1) node->height_ = node->left_branch_->height_ + 1;
