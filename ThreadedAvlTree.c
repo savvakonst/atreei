@@ -301,8 +301,8 @@ struct AvlNode *insertAvlNode(struct AvlTree *avl_tree, const tree_key_t *key_p,
                     LEFT_ROTATION(node->left_branch_, l);
                     l->height_ = r->height_;
                     r->height_ = node->height_;
-                    l->size_ = l->size_ - (r->right_branch_ ? r->right_branch_->size_ : 0) - 1;
-                    // UPDATE_SIZE(l);
+                    // l->size_ = l->size_ - (r->right_branch_ ? r->right_branch_->size_ : 0) - 1;
+                    UPDATE_SIZE(l);
                     l = r;
                 }
                 LIGHT_RIGHT_ROTATION(**node_stack, node, l);
@@ -310,8 +310,8 @@ struct AvlNode *insertAvlNode(struct AvlTree *avl_tree, const tree_key_t *key_p,
                 node->height_ = node->height_ - 1;
 
                 size_t temp_size = node->size_;
-                node->size_ = node->size_ - l->left_branch_->size_ - 1;
-                l->size_ = temp_size;
+                // node->size_ = node->size_ - l->left_branch_->size_ - 1;
+                // l->size_ = temp_size;
                 UPDATE_SIZE(node);
                 UPDATE_SIZE(l);
 
@@ -326,7 +326,7 @@ struct AvlNode *insertAvlNode(struct AvlTree *avl_tree, const tree_key_t *key_p,
                     r->height_ = l->height_;
                     l->height_ = node->height_;
 
-                    r->size_ = r->size_ - (l->left_branch_ ? l->left_branch_->size_ : 0) - 1;
+                    // r->size_ = r->size_ - (l->left_branch_ ? l->left_branch_->size_ : 0) - 1;
                     UPDATE_SIZE(r);
                     r = l;
                 }
@@ -336,8 +336,8 @@ struct AvlNode *insertAvlNode(struct AvlTree *avl_tree, const tree_key_t *key_p,
                 // r->size_ = node->size_;
 
                 size_t temp_size = node->size_;
-                node->size_ = node->size_ - r->right_branch_->size_ - 1;
-                r->size_ = temp_size;
+                // node->size_ = node->size_ - r->right_branch_->size_ - 1;
+                // r->size_ = temp_size;
                 UPDATE_SIZE(node);
                 UPDATE_SIZE(r);
 
