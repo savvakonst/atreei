@@ -201,7 +201,9 @@ struct AvlNode *insertAvlNode(struct AvlTree *avl_tree, const tree_key_t *key_p,
 #ifdef SIZE_SUPPORT
 #    define FINISH_TREATMENT goto size_treatment
 #    define SIZE_INCREMENT node->size_++
-#    define UPDATE_SIZE(X) ((X)->size_ = (X)->right_branch_->size_ + (X)->left_branch_->size_ + 1)
+#    define UPDATE_SIZE(X)                                                   \
+        ((X)->size_ = ((X)->right_branch_ ? (X)->right_branch_->size_ : 0) + \
+                      ((X)->left_branch_ ? (X)->left_branch_->size_ : 0) + 1)
 #else
 #    define FINISH_TREATMENT return NULL
 #    define SIZE_INCREMENT node->size_++
@@ -211,7 +213,7 @@ struct AvlNode *insertAvlNode(struct AvlTree *avl_tree, const tree_key_t *key_p,
     if (node->height_ > 1) FINISH_TREATMENT;
     node->height_ = 2;
     // node = **(--node_stack);
-
+    SIZE_INCREMENT;
     if (*(--node_stack) == NULL || (**node_stack)->height_ > 2) FINISH_TREATMENT;
 
     node = **(node_stack);
@@ -228,14 +230,24 @@ struct AvlNode *insertAvlNode(struct AvlTree *avl_tree, const tree_key_t *key_p,
 
             l->height_ = 1;
             r->height_ = 2;
+
+            l->size_--;
+            r->size_ = node->size_;
+            node->size_ = 1;
+
             **node_stack = r;
         } else {
             l->right_branch_ = node;
+
+            l->size_ = 3;
+            node->size_ = 1;
+
             **node_stack = l;
         }
 
         node->left_branch_ = NULL;
         node->height_ = 1;
+        --node_stack;
         FINISH_TREATMENT;
     } else if (node->left_branch_ == NULL) {
         struct AvlNode *r = node->right_branch_;
@@ -248,14 +260,25 @@ struct AvlNode *insertAvlNode(struct AvlTree *avl_tree, const tree_key_t *key_p,
 
             r->height_ = 1;
             l->height_ = 2;
+
+            r->size_--;
+            l->size_ = node->size_;
+            node->size_ = 1;
+
+
             **node_stack = l;
         } else {
             r->left_branch_ = node;
+
+            r->size_ = 3;
+            node->size_ = 1;
+
             **node_stack = r;
         }
 
         node->right_branch_ = NULL;
         node->height_ = 1;
+        --node_stack;
         FINISH_TREATMENT;
     }
 
@@ -285,11 +308,12 @@ struct AvlNode *insertAvlNode(struct AvlTree *avl_tree, const tree_key_t *key_p,
                 LIGHT_RIGHT_ROTATION(**node_stack, node, l);
 
                 node->height_ = node->height_ - 1;
+
                 size_t temp_size = node->size_;
                 node->size_ = node->size_ - l->left_branch_->size_ - 1;
                 l->size_ = temp_size;
-                // UPDATE_SIZE(node);
-                //  UPDATE_SIZE(l);
+                UPDATE_SIZE(node);
+                UPDATE_SIZE(l);
 
                 FINISH_TREATMENT;
             }
@@ -301,19 +325,21 @@ struct AvlNode *insertAvlNode(struct AvlTree *avl_tree, const tree_key_t *key_p,
                     RIGHT_ROTATION(node->right_branch_, r);
                     r->height_ = l->height_;
                     l->height_ = node->height_;
+
                     r->size_ = r->size_ - (l->left_branch_ ? l->left_branch_->size_ : 0) - 1;
-                    // UPDATE_SIZE(r);
+                    UPDATE_SIZE(r);
                     r = l;
                 }
                 LIGHT_LEFT_ROTATION(**node_stack, node, r);
 
                 node->height_ = node->height_ - 1;
                 // r->size_ = node->size_;
+
                 size_t temp_size = node->size_;
                 node->size_ = node->size_ - r->right_branch_->size_ - 1;
                 r->size_ = temp_size;
-                // UPDATE_SIZE(node);
-                //  UPDATE_SIZE(r);
+                UPDATE_SIZE(node);
+                UPDATE_SIZE(r);
 
                 FINISH_TREATMENT;
             }

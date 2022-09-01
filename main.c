@@ -10,10 +10,11 @@
 #include <string.h>
 #include <sys/timeb.h>
 #include <time.h>
+#include <wchar.h>
 
 #define KEY_SIZE 1
 
-#define DATA_SIZE 500
+#define DATA_SIZE 40
 
 
 #define PRINT_F(...)         \
@@ -31,44 +32,60 @@ int walkPrint(struct AvlNode* node) {
     if (node->right_branch_) walkPrint(node->right_branch_);
 }
 
-int walkValidateHeight_(struct AvlNode* node, int* cnt) {
+
+int walkValidate_(struct AvlNode* node, int* cnt) {
     if (node == NULL) return 0;
-    if (node->left_branch_) walkValidateHeight_(node->left_branch_, cnt);
+
+    int status = 0;
+    if (node->left_branch_) status |= walkValidate_(node->left_branch_, cnt);
+
+
     char left = node->left_branch_ ? node->left_branch_->height_ : 0;
     char right = node->right_branch_ ? node->right_branch_->height_ : 0;
+
+
     if ((max(left, right) + 1) != (node->height_)) {
-        PRINT_F("\033[0;31m error on : pos= %d  (top= %d  left= %d  right= %d ) \033[0m\n", (*cnt), node->height_, left,
-                right);
+        PRINT_F("\033[0;31m height_ error on : pos= %d  (top= %d  left= %d  right= %d ) \033[0m\n", (*cnt),
+                node->height_, left, right);
+        status = status | 0b0001;
     }
-    if (node->right_branch_) walkValidateHeight_(node->right_branch_, cnt);
+
+#ifdef SIZE_SUPPORT
+    char left_size = node->left_branch_ ? node->left_branch_->size_ : 0;
+    char right_size = node->right_branch_ ? node->right_branch_->size_ : 0;
+
+    if (left_size + right_size != node->size_ - 1) {
+        PRINT_F("\033[0;31m size_ error on : pos= %d  (top= %d  left= %d  right= %d ) \033[0m\n", (*cnt), node->size_,
+                left_size, right_size);
+        status = status | 0b0010;
+    }
+#endif
+
+    if (node->right_branch_) status |= walkValidate_(node->right_branch_, cnt);
 
     (*cnt)++;
-    return 0;
+    return status;
 }
-#define walkValidateHeight(NODE)       \
-    {                                  \
-        int c = 0;                     \
-        walkValidateHeight_(NODE, &c); \
-    }
-// int walkValidateHeight(struct AvlNode* node) {
-//     int c = 0;
-//     return walkValidateHeight_(node, &c);
-// }
+
+int walkValidate(struct AvlNode* node) {
+    int c = 0;
+    return walkValidate_(node, &c);
+}
 
 
 
-void printNodeDot(struct AvlNode* node, FILE* stream) {
+void printNodeDot_(struct AvlNode* node, FILE* stream) {
     fprintf(stream, "    %llu [label = \"%llu, %llu\" ];\n", (uint64_t)node->key_, (uint64_t)node->key_,
-            (uint64_t)node->height_);
+            (uint64_t)node->size_);
 
     if (node->left_branch_) {
         fprintf(stream, "    %llu -> %llu;\n", (uint64_t)node->key_, (uint64_t)node->left_branch_->key_);
-        printNodeDot(node->left_branch_, stream);
+        printNodeDot_(node->left_branch_, stream);
     }
 
     if (node->right_branch_) {
         fprintf(stream, "    %llu -> %llu;\n", (uint64_t)node->key_, (uint64_t)node->right_branch_->key_);
-        printNodeDot(node->right_branch_, stream);
+        printNodeDot_(node->right_branch_, stream);
     }
 }
 
@@ -79,7 +96,7 @@ void printTreeDot(struct AvlNode* top_node, FILE* stream) {
     if (!top_node) fprintf(stream, "\n");
     else if (!top_node->right_branch_ && !top_node->left_branch_)
         fprintf(stream, "    %llu;\n", (uint64_t)top_node->key_);
-    else printNodeDot(top_node, stream);
+    else printNodeDot_(top_node, stream);
 
     fprintf(stream, "}\n");
 }
@@ -87,7 +104,7 @@ void printTreeDot(struct AvlNode* top_node, FILE* stream) {
 
 
 typedef uint64_t test_data_type_t;
-
+#include <string.h>
 int main(int argc, char* argv[]) {
     struct AvlTree* tree = newAvlTree();
 
@@ -108,7 +125,20 @@ int main(int argc, char* argv[]) {
         *(ptr++) = random;
         PRINT_F("random N: %llu\n", random);
         insertAvlNode(tree, (const tree_key_t*)&random, NULL);
+
+
+        char* buf;
+        size_t len;
+        static char buffer[] = "foobar";
+        // fopen_s()
+
+        // FILE* stream = open_memstream(&buf, &len);
+        // if (walkValidate(tree->top_node_))
+        walkValidate(tree->top_node_);
+        printTreeDot(tree->top_node_, stdout);
     }
+    PRINT_F(" --------------------------------\n");
+    // walkValidate(tree->top_node_);
 
     PRINT_F(" --------------------------------\n");
 
@@ -140,14 +170,14 @@ int main(int argc, char* argv[]) {
             removeAvlNode(tree, &temp_data);
 
             PRINT_F("deletion N: %d\n", i);
-            walkValidateHeight(tree->top_node_);
+            // walkValidate(tree->top_node_);
 
 
             PRINT_F(" \n");
         }
     } else {
         struct AvlNode* node = getFirstAvlNode(tree);
-        walkValidateHeight(tree->top_node_);
+        walkValidate(tree->top_node_);
         int cnt = 0;
         while (node && cnt < 20) {
             node = node->next_;
@@ -155,7 +185,7 @@ int main(int argc, char* argv[]) {
 
             PRINT_F("deletion N: %d\n", cnt);
 
-            walkValidateHeight(tree->top_node_);
+            walkValidate(tree->top_node_);
 
             PRINT_F(" \n");
 
