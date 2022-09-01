@@ -201,11 +201,13 @@ struct AvlNode *insertAvlNode(struct AvlTree *avl_tree, const tree_key_t *key_p,
 #ifdef SIZE_SUPPORT
 #    define FINISH_TREATMENT goto size_treatment
 #    define SIZE_INCREMENT node->size_++
+#    define UPDATE_SIZE(X) ((X)->size_ = (X)->right_branch_->size_ + (X)->left_branch_->size_ + 1)
 #else
 #    define FINISH_TREATMENT return NULL
 #    define SIZE_INCREMENT node->size_++
+#    define UPDATE_SIZE(ARG)
 #endif
-    
+
     if (node->height_ > 1) FINISH_TREATMENT;
     node->height_ = 2;
     // node = **(--node_stack);
@@ -270,18 +272,24 @@ struct AvlNode *insertAvlNode(struct AvlTree *avl_tree, const tree_key_t *key_p,
         if (diff > 0) {
             if (diff == 1) node->height_ = node->left_branch_->height_ + 1;
             else {
-                struct AvlNode *l =
-                    node->left_branch_;  // TODO define 'r' here, and simplify comparison and LEFT_ROTATION
+                // TODO define 'r' here, and simplify comparison and LEFT_ROTATION
+                struct AvlNode *l = node->left_branch_;
                 if (l->left_branch_->height_ < l->right_branch_->height_) {  //(simple rot)
                     LEFT_ROTATION(node->left_branch_, l);
-
                     l->height_ = r->height_;
                     r->height_ = node->height_;
+                    l->size_ = l->size_ - (r->right_branch_ ? r->right_branch_->size_ : 0) - 1;
+                    // UPDATE_SIZE(l);
                     l = r;
                 }
                 LIGHT_RIGHT_ROTATION(**node_stack, node, l);
 
                 node->height_ = node->height_ - 1;
+                size_t temp_size = node->size_;
+                node->size_ = node->size_ - l->left_branch_->size_ - 1;
+                l->size_ = temp_size;
+                // UPDATE_SIZE(node);
+                //  UPDATE_SIZE(l);
 
                 FINISH_TREATMENT;
             }
@@ -291,14 +299,21 @@ struct AvlNode *insertAvlNode(struct AvlTree *avl_tree, const tree_key_t *key_p,
                 struct AvlNode *r = node->right_branch_;
                 if (r->right_branch_->height_ < r->left_branch_->height_) {  //(simple rot)
                     RIGHT_ROTATION(node->right_branch_, r);
-
                     r->height_ = l->height_;
                     l->height_ = node->height_;
+                    r->size_ = r->size_ - (l->left_branch_ ? l->left_branch_->size_ : 0) - 1;
+                    // UPDATE_SIZE(r);
                     r = l;
                 }
                 LIGHT_LEFT_ROTATION(**node_stack, node, r);
 
                 node->height_ = node->height_ - 1;
+                // r->size_ = node->size_;
+                size_t temp_size = node->size_;
+                node->size_ = node->size_ - r->right_branch_->size_ - 1;
+                r->size_ = temp_size;
+                // UPDATE_SIZE(node);
+                //  UPDATE_SIZE(r);
 
                 FINISH_TREATMENT;
             }
