@@ -14,7 +14,7 @@
 
 #define KEY_SIZE 1
 
-#define DATA_SIZE 40
+#define DATA_SIZE 400
 
 
 #define PRINT_F(...)         \
@@ -26,7 +26,7 @@
 int walkPrint(struct AvlNode* node) {
     if (node->left_branch_) walkPrint(node->left_branch_);
 
-    PRINT_F("w %04d \n", (uint64_t)node->key_);
+    PRINT_F("w %04lld \n", (uint64_t)node->key_);
 
 
     if (node->right_branch_) walkPrint(node->right_branch_);
@@ -51,12 +51,12 @@ int walkValidate_(struct AvlNode* node, int* cnt) {
     }
 
 #ifdef SIZE_SUPPORT
-    char left_size = node->left_branch_ ? node->left_branch_->size_ : 0;
-    char right_size = node->right_branch_ ? node->right_branch_->size_ : 0;
+    size_t left_size = node->left_branch_ ? node->left_branch_->size_ : 0;
+    size_t right_size = node->right_branch_ ? node->right_branch_->size_ : 0;
 
     if (left_size + right_size != node->size_ - 1) {
-        PRINT_F("\033[0;31m size_ error on : pos= %d  (top= %d  left= %d  right= %d ) \033[0m\n", (*cnt), node->size_,
-                left_size, right_size);
+        PRINT_F("\033[0;31m size_ error on : pos= %d  (top= %llu  left= %llu  right= %llu ) \033[0m\n", (*cnt),
+                node->size_, left_size, right_size);
         status = status | 0b0010;
     }
 #endif
@@ -76,7 +76,7 @@ int walkValidate(struct AvlNode* node) {
 
 void printNodeDot_(struct AvlNode* node, FILE* stream) {
     fprintf(stream, "    %llu [label = \"%llu, %llu\" ];\n", (uint64_t)node->key_, (uint64_t)node->key_,
-            (uint64_t)node->size_);
+            (uint64_t)node->height_);
 
     if (node->left_branch_) {
         fprintf(stream, "    %llu -> %llu;\n", (uint64_t)node->key_, (uint64_t)node->left_branch_->key_);
@@ -135,7 +135,7 @@ int main(int argc, char* argv[]) {
         // FILE* stream = open_memstream(&buf, &len);
         // if (walkValidate(tree->top_node_))
         walkValidate(tree->top_node_);
-        printTreeDot(tree->top_node_, stdout);
+        // printTreeDot(tree->top_node_, stdout);
     }
     PRINT_F(" --------------------------------\n");
     // walkValidate(tree->top_node_);
