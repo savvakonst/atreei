@@ -94,4 +94,12 @@ struct AvlNode *insertAvlNode(struct AvlTree *avl_tree, const tree_key_t *key_p,
 struct AvlNode *removeAvlNode(struct AvlTree *avl_tree, const tree_key_t *key_p);
 
 
+
+#ifdef SIZE_SUPPORT
+struct AvlNode *findAvlNodeWithIndex(struct AvlTree *avl_tree, tree_key_t key, size_t *index);
+
+struct AvlNode *findAvlNodeByIndex(struct AvlTree *avl_tree, size_t index);
+
+#endif
+
 #endif

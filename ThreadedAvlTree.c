@@ -561,7 +561,9 @@ size_treatment:
 
 
 
-struct AvlNode *findAvlNodeWithIndex(struct AvlTree *avl_tree, const tree_key_t key, size_t *index) {
+#ifdef SIZE_SUPPORT
+
+struct AvlNode *findAvlNodeWithIndex(struct AvlTree *avl_tree, tree_key_t key, size_t *index) {
     struct AvlNode *node = avl_tree->top_node_;
 
     *index = node->left_branch_ ? node->left_branch_->size_ : 0;
@@ -600,3 +602,5 @@ struct AvlNode *findAvlNodeByIndex(struct AvlTree *avl_tree, size_t index) {
 
     return node;
 }
+
+#endif  // SIZE_SUPPORT
