@@ -93,13 +93,12 @@ void deleteAvlTree(struct AvlTree *avl_tree, deleteKeyAndDataF_t delete_data_f) 
 
 struct AvlNode *findAvlNode(struct AvlTree *avl_tree, tree_key_t key) {
     struct AvlNode *node = avl_tree->top_node_;
-    avlNodeStack_t node_stack = avl_tree->stack_;
 
     while (node != NULL) {
         if (AVL_KEY_LESS(key, node->key_)) {
             node = node->left_branch_;
         } else if (AVL_KEY_LESS(node->key_, key)) {
-            node = node->left_branch_;
+            node = node->right_branch_;
         } else return node;
     }
     return node;
@@ -558,4 +557,46 @@ size_treatment:
 #endif
     return node_to_delete;
 #undef FINISH_TREATMENT
+}
+
+
+
+struct AvlNode *findAvlNodeWithIndex(struct AvlTree *avl_tree, const tree_key_t key, size_t *index) {
+    struct AvlNode *node = avl_tree->top_node_;
+
+    *index = node->left_branch_ ? node->left_branch_->size_ : 0;
+
+    while (1) {
+        if (AVL_KEY_LESS(key, node->key_)) {
+            node = node->left_branch_;
+            if (node == NULL) return NULL;
+            *index -= node->right_branch_ ? node->right_branch_->size_ : 0;
+        } else if (AVL_KEY_LESS(node->key_, key)) {
+            node = node->right_branch_;
+            if (node == NULL) return NULL;
+            *index += node->left_branch_ ? node->left_branch_->size_ : 0;
+        } else return node;
+    }
+    return node;
+}
+
+
+struct AvlNode *findAvlNodeByIndex(struct AvlTree *avl_tree, size_t index) {
+    struct AvlNode *node = avl_tree->top_node_;
+
+    if (node == NULL || (node->size_ <= index)) return NULL;
+
+    size_t current_index = node->left_branch_ ? node->left_branch_->size_ : 0;
+
+    while (1) {
+        if (index < current_index) {
+            node = node->left_branch_;
+            current_index -= node->right_branch_ ? node->right_branch_->size_ : 0;
+        } else if (index > current_index) {
+            node = node->right_branch_;
+            current_index += node->left_branch_ ? node->left_branch_->size_ : 0;
+        } else return node;
+    }
+
+    return node;
 }
