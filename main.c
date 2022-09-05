@@ -14,7 +14,7 @@
 
 #define KEY_SIZE 1
 
-#define DATA_SIZE 400
+#define DATA_SIZE 1000
 
 
 #define PRINT_F(...)         \
@@ -165,6 +165,7 @@ int main(int argc, char* argv[]) {
 
 
     if (1) {
+        char cond = 1;
         for (int i = 0; i < DATA_SIZE; i++) {
             test_data_type_t temp_data = *(data_array + i);
             removeAvlNode(tree, &temp_data);
@@ -172,6 +173,7 @@ int main(int argc, char* argv[]) {
             PRINT_F("deletion N: %d\n", i);
             // walkValidate(tree->top_node_);
 
+            if (cond && walkValidate(tree->top_node_)) cond = 0;
 
             PRINT_F(" \n");
         }

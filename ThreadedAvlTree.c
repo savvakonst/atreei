@@ -146,6 +146,8 @@ struct AvlNode *getFirstAvlNode(struct AvlTree *avl_tree) {
 #    define SIZE_INCREMENT(NODE) (NODE)->size_++
 #    define SIZE_DECREMENT(NODE) (NODE)->size_--
 
+#    define DECREMENT_NODE_STACK --node_stack
+
 #    define UPDATE_SHORT_DOUBLE_ROTATION_SIZES(X, Y, NODE) \
         (X)->size_--;                                      \
         (Y)->size_ = (NODE)->size_;                        \
@@ -161,14 +163,17 @@ struct AvlNode *getFirstAvlNode(struct AvlTree *avl_tree) {
             size_t temp_size = (NODE)->size_;                          \
             (NODE)->size_ = (NODE)->size_ - (X)->DIRECTION->size_ - 1; \
             (X)->size_ = temp_size;                                    \
-            --node_stack;                                              \
         }
+
 
 #    define UPDATE_DOUBLE_ROTATION_SIZES(X, Y) X->size_ = X->size_ - (Y ? Y->size_ : 0) - 1
 
 #else
 #    define SIZE_INCREMENT(NODE)
 #    define SIZE_DECREMENT(NODE)
+
+#    define DECREMENT_NODE_STACK --node_stack
+
 #    define UPDATE_SHORT_DOUBLE_ROTATION_SIZES(X)
 #    define UPDATE_SHORT_SINGLE_ROTATION_SIZES(X)
 #    define UPDATE_ROTATION_SIZES(X, NODE)
@@ -323,7 +328,7 @@ struct AvlNode *insertAvlNode(struct AvlTree *avl_tree, const tree_key_t *key_p,
                 node->height_ = node->height_ - 1;
 
                 UPDATE_ROTATION_SIZES(l, left_branch_, node);
-
+                DECREMENT_NODE_STACK;
                 FINISH_TREATMENT;
             }
         } else if (diff < 0) {
@@ -342,7 +347,7 @@ struct AvlNode *insertAvlNode(struct AvlTree *avl_tree, const tree_key_t *key_p,
                 node->height_ = node->height_ - 1;
 
                 UPDATE_ROTATION_SIZES(r, right_branch_, node);
-
+                DECREMENT_NODE_STACK;
                 FINISH_TREATMENT;
             }
         } else {
@@ -376,12 +381,8 @@ struct AvlNode *removeAvlNode(struct AvlTree *avl_tree, const tree_key_t *key_p)
 
 #ifdef SIZE_SUPPORT
 #    define FINISH_TREATMENT goto size_treatment
-#    define SIZE_DECREMENT node->size_++
-
 #else
 #    define FINISH_TREATMENT return node_to_delete
-#    define SIZE_DECREMENT
-
 #endif
 
 
@@ -431,14 +432,19 @@ struct AvlNode *removeAvlNode(struct AvlTree *avl_tree, const tree_key_t *key_p)
 
         tmp->right_branch_ = node_to_delete->right_branch_;
         tmp->left_branch_ = node_to_delete->left_branch_;
+
+#ifdef SIZE_SUPPORT
+        tmp->size_ = node_to_delete->size_;
+#endif
         *stack_item = tmp;
     }
 
     if (*(--node_stack) == NULL) return node_to_delete;
 
     struct AvlNode *node = **node_stack;
-    SIZE_DECREMENT;
+
     if (h == 1) {
+        SIZE_DECREMENT(node);
         if (node->height_ == 2) {
             if (node->left_branch_ == NULL && node->right_branch_ == NULL) node->height_ = 1;
         } else if (node->left_branch_) {
@@ -453,9 +459,12 @@ struct AvlNode *removeAvlNode(struct AvlTree *avl_tree, const tree_key_t *key_p)
                 // TODO: probably, using l->height_ = l->left_branch_? 2 :1;  instead of line below is better
                 if (l->left_branch_ == NULL) l->height_ = 1;
                 r->height_ = l->height_ + 1;
+
+                UPDATE_SHORT_DOUBLE_ROTATION_SIZES(l, r, node);
                 **node_stack = r;
             } else {
                 l->right_branch_ = node;
+                UPDATE_SHORT_SINGLE_ROTATION_SIZES(l, node);
                 **node_stack = l;
             }
 
@@ -474,9 +483,11 @@ struct AvlNode *removeAvlNode(struct AvlTree *avl_tree, const tree_key_t *key_p)
                 // TODO: probably, using r->height_ = r->right_branch_? 2 :1;  instead of line below is better
                 if (r->right_branch_ == NULL) r->height_ = 1;
                 l->height_ = r->height_ + 1;
+                UPDATE_SHORT_DOUBLE_ROTATION_SIZES(r, l, node);
                 **node_stack = l;
             } else {
                 r->left_branch_ = node;
+                UPDATE_SHORT_SINGLE_ROTATION_SIZES(r, node);
                 **node_stack = r;
             }
 
@@ -491,13 +502,12 @@ struct AvlNode *removeAvlNode(struct AvlTree *avl_tree, const tree_key_t *key_p)
     while (*(--node_stack)) {
         node = **node_stack;
 
-        SIZE_DECREMENT;
+        SIZE_DECREMENT(node);
 
         int diff = node->left_branch_->height_ - node->right_branch_->height_;
         if (diff > 0) {
             if (diff == 1) {
                 FINISH_TREATMENT;  // node->height_ = node->left_branch_->height_ + 1;
-
             } else {
                 struct AvlNode *l = node->left_branch_;
                 tree_height_t h_tmp = l->right_branch_->height_;
@@ -506,12 +516,13 @@ struct AvlNode *removeAvlNode(struct AvlTree *avl_tree, const tree_key_t *key_p)
                     LEFT_ROTATION(node->left_branch_, l);
                     l->height_ = r->height_;
                     h_tmp = node->right_branch_->height_;
-
+                    UPDATE_DOUBLE_ROTATION_SIZES(l, r->right_branch_);
                     l = r;
                 }
                 LITE_RIGHT_ROTATION(**node_stack, node, l);
                 node->height_ = h_tmp + 1;
                 l->height_ = node->height_ + 1;
+                UPDATE_ROTATION_SIZES(l, left_branch_, node);
             }
         } else if (diff < 0) {
             if (diff == -1) {
@@ -523,11 +534,13 @@ struct AvlNode *removeAvlNode(struct AvlTree *avl_tree, const tree_key_t *key_p)
                     RIGHT_ROTATION(node->right_branch_, r);
                     r->height_ = l->height_;
                     h_tmp = node->left_branch_->height_;
+                    UPDATE_DOUBLE_ROTATION_SIZES(r, l->left_branch_);
                     r = l;
                 }
                 LITE_LEFT_ROTATION(**node_stack, node, r);
                 node->height_ = h_tmp + 1;
                 r->height_ = node->height_ + 1;
+                UPDATE_ROTATION_SIZES(r, right_branch_, node);
             }
         } else {
             node->height_ = node->left_branch_->height_ + 1;
@@ -544,4 +557,5 @@ size_treatment:
 
 #endif
     return node_to_delete;
+#undef FINISH_TREATMENT
 }
