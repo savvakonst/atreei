@@ -162,7 +162,21 @@ int main(int argc, char* argv[]) {
     walkPrint(tree->top_node_);
     PRINT_F(" --------------------------------\n");
 
+    {
+        struct AvlNode* node = getFirstAvlNode(tree);
+        size_t cnt = 0;
+        while (node) {
+            PRINT_F("%04d   %06llu \n", cnt, (uint64_t)node->key_);
+            size_t index = -1;
+            findAvlNodeWithIndex(tree, node->key_, &index);
+            if (findAvlNodeByIndex(tree, cnt) != node)
+                PRINT_F("\033[0;31m error findAvlNodeByIndex(tree,cnt) != node:   \033[0m\n");
+            if (index != cnt) PRINT_F("\033[0;31m error index != cnt: %llu != %llu  \033[0m\n", index, cnt);
 
+            node = node->next_;
+            cnt++;
+        }
+    }
 
     if (1) {
         char cond = 1;
@@ -172,10 +186,8 @@ int main(int argc, char* argv[]) {
 
             PRINT_F("deletion N: %d\n", i);
             // walkValidate(tree->top_node_);
-
             if (cond && walkValidate(tree->top_node_)) cond = 0;
-
-            PRINT_F(" \n");
+            // PRINT_F(" \n");
         }
     } else {
         struct AvlNode* node = getFirstAvlNode(tree);
@@ -197,17 +209,6 @@ int main(int argc, char* argv[]) {
 
     PRINT_F(" --------------------------------\n");
 
-
-    {
-        struct AvlNode* node = getFirstAvlNode(tree);
-        int cnt = 0;
-        while (node) {
-            PRINT_F("%04d   %06llu \n", cnt, (uint64_t)node->key_);
-
-            node = node->next_;
-            cnt++;
-        }
-    }
 
 
     deleteAvlTree(tree, NULL);

@@ -565,6 +565,7 @@ size_treatment:
 
 struct AvlNode *findAvlNodeWithIndex(struct AvlTree *avl_tree, tree_key_t key, size_t *index) {
     struct AvlNode *node = avl_tree->top_node_;
+    if (node == NULL) return NULL;
 
     *index = node->left_branch_ ? node->left_branch_->size_ : 0;
 
@@ -572,11 +573,11 @@ struct AvlNode *findAvlNodeWithIndex(struct AvlTree *avl_tree, tree_key_t key, s
         if (AVL_KEY_LESS(key, node->key_)) {
             node = node->left_branch_;
             if (node == NULL) return NULL;
-            *index -= node->right_branch_ ? node->right_branch_->size_ : 0;
+            *index -= (node->right_branch_ ? node->right_branch_->size_ : 0) + 1;
         } else if (AVL_KEY_LESS(node->key_, key)) {
             node = node->right_branch_;
             if (node == NULL) return NULL;
-            *index += node->left_branch_ ? node->left_branch_->size_ : 0;
+            *index += (node->left_branch_ ? node->left_branch_->size_ : 0) + 1;
         } else return node;
     }
     return node;
@@ -588,15 +589,15 @@ struct AvlNode *findAvlNodeByIndex(struct AvlTree *avl_tree, size_t index) {
 
     if (node == NULL || (node->size_ <= index)) return NULL;
 
-    size_t current_index = node->left_branch_ ? node->left_branch_->size_ : 0;
+    size_t current_index = (node->left_branch_ ? node->left_branch_->size_ : 0);
 
     while (1) {
         if (index < current_index) {
             node = node->left_branch_;
-            current_index -= node->right_branch_ ? node->right_branch_->size_ : 0;
+            current_index -= (node->right_branch_ ? node->right_branch_->size_ : 0) + 1;
         } else if (index > current_index) {
             node = node->right_branch_;
-            current_index += node->left_branch_ ? node->left_branch_->size_ : 0;
+            current_index += (node->left_branch_ ? node->left_branch_->size_ : 0) + 1;
         } else return node;
     }
 
