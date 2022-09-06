@@ -382,14 +382,28 @@ struct ImKeyAtiNode *removeImKeyAtiNode(struct ImKeyTAti *avl_tree, const tree_k
 
     struct ImKeyAtiNode *node_to_delete = *stack_item;
 
-    while (node_to_delete != NULL) {
-        *(++node_stack) = stack_item;
+    size_t index = (size_t) *key_p;
 
-        if (AVL_KEY_LESS(*key_p, node_to_delete->key_)) stack_item = &(node_to_delete->left_branch_);
-        else if (AVL_KEY_LESS(node_to_delete->key_, *key_p)) stack_item = &(node_to_delete->right_branch_);
-        else break;
-        node_to_delete = *stack_item;
+
+    if (node_to_delete == NULL || (node_to_delete->size_ <= index)) return NULL;
+
+    size_t current_index = (node_to_delete->left_branch_ ? node_to_delete->left_branch_->size_ : 0);
+
+    while (1) {
+
+        if (index < current_index) {
+            stack_item = &node_to_delete->left_branch_;
+            node_to_delete = *stack_item;
+            current_index -= (node_to_delete->right_branch_ ? node_to_delete->right_branch_->size_ : 0) + 1;
+        } else if (index > current_index) {
+            stack_item = &node_to_delete->right_branch_;
+            node_to_delete = *stack_item;
+            current_index += (node_to_delete->left_branch_ ? node_to_delete->left_branch_->size_ : 0) + 1;
+        } else break;
+        *(++node_stack) = stack_item;
     }
+
+
     if (node_to_delete == NULL) return NULL;
 
 
