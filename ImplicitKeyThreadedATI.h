@@ -22,12 +22,9 @@ typedef char tree_diff_t;
 #define SIZE_SUPPORT
 
 struct ImKeyAtiNode {
-    tree_key_t key_;
+    //tree_key_t key_;
+    size_t size_;
     tree_data_t data_;
-
-
-
-
 
 
     struct ImKeyAtiNode *left_branch_;  /**< key_ of left_branch_ is less then current */
@@ -35,12 +32,11 @@ struct ImKeyAtiNode {
     struct ImKeyAtiNode *previous_;     /**< key_ of previous_ is less then current */
     struct ImKeyAtiNode *next_;         /**< key_ of next_ is more then current */
 
-    size_t size_;
     tree_height_t height_; /**< equal 1 when it has no branches*/
 };
 
-typedef struct ImKeyAtiNode **ImKeyAtiNodeStackItem_t;
-typedef ImKeyAtiNodeStackItem_t *ImKeyAtiNodeStack_t;
+typedef struct ImKeyAtiNode **imKeyAtiNodeStackItem_t;
+typedef imKeyAtiNodeStackItem_t *imKeyAtiNodeStack_t;
 
 
 /**
@@ -49,23 +45,23 @@ typedef ImKeyAtiNodeStackItem_t *ImKeyAtiNodeStack_t;
 typedef void (*deleteKeyAndDataF_t)(struct ImKeyAtiNode *);
 
 
-struct ImKeyAti {
+struct ImKeyTAti {
     struct ImKeyAtiNode *top_node_;
     size_t size_;
     struct ImKeyAtiNode *first_node_;
     struct ImKeyAtiNode *last_node_;
 
     /// first element of node stack always equal NULL
-    ImKeyAtiNodeStack_t stack_;
+    imKeyAtiNodeStack_t stack_;
 };
 
-struct ImKeyAti *newImKeyAti();
+struct ImKeyTAti *newImKeyAti();
 
 
 /**
  * frees the memory allocated for avl_tree and its associated nodes, keys and data.
  */
-void deleteImKeyAti(struct ImKeyAti *avl_tree, deleteKeyAndDataF_t delete_data_f);
+void deleteImKeyAti(struct ImKeyTAti *avl_tree, deleteKeyAndDataF_t delete_data_f);
 
 /**
  * frees the memory allocated for node structure.
@@ -74,33 +70,33 @@ void deleteImKeyAti(struct ImKeyAti *avl_tree, deleteKeyAndDataF_t delete_data_f
 void deleteImKeyAtiNode(struct ImKeyAtiNode *node);
 
 
-struct ImKeyAtiNode *getFirstImKeyAtiNode(struct ImKeyAti *avl_tree);
+struct ImKeyAtiNode *getFirstImKeyAtiNode(struct ImKeyTAti *avl_tree);
 
 /**
  * if equal key exists it removes node from tree structure and returns pointer to the corresponding node
  */
-struct ImKeyAtiNode *findImKeyAtiNode(struct ImKeyAti *avl_tree, tree_key_t key);
+struct ImKeyAtiNode *findImKeyAtiNode(struct ImKeyTAti *avl_tree, tree_key_t key);
 
 /**
  *  if equal key exists it returns node pointer without insertion
  * (developer responsible for changing data/insertion.), otherwise it creates a new
  * node, inserts that node into the, balances the tree and returns NULL.
  */
-struct ImKeyAtiNode *insertImKeyAtiNode(struct ImKeyAti *avl_tree, const tree_key_t *key_p, tree_data_t data);
+struct ImKeyAtiNode *insertImKeyAtiNode(struct ImKeyTAti *avl_tree, const tree_key_t *key_p, tree_data_t data);
 
 /**
  *  if equal key exists it removes node from tree structure and returns pointer to the corresponding node
  *  ( developer is responsible for freeing memory), otherwise it returns NULL.
  */
-struct ImKeyAtiNode *removeImKeyAtiNode(struct ImKeyAti *avl_tree, const tree_key_t *key_p);
+struct ImKeyAtiNode *removeImKeyAtiNode(struct ImKeyTAti *avl_tree, const tree_key_t *key_p);
 
 
 
 
 
-struct ImKeyAtiNode *findImKeyAtiNodeWithIndex(struct ImKeyAti *avl_tree, tree_key_t key, size_t *index);
+struct ImKeyAtiNode *findImKeyAtiNodeWithIndex(struct ImKeyTAti *avl_tree, tree_key_t key, size_t *index);
 
-struct ImKeyAtiNode *findImKeyAtiNodeByIndex(struct ImKeyAti *avl_tree, size_t index);
+struct ImKeyAtiNode *findImKeyAtiNodeByIndex(struct ImKeyTAti *avl_tree, size_t index);
 
 
 

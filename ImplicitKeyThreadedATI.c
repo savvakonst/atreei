@@ -17,7 +17,7 @@
 struct ImKeyAtiNode *newImKeyAtiNode(tree_key_t key, tree_data_t data) {
     struct ImKeyAtiNode *node = (struct ImKeyAtiNode *)malloc(sizeof(struct ImKeyAtiNode));
 
-    node->key_ = key;
+    //node->key_ = key;
     node->data_ = data;
 
     node->left_branch_ = NULL;
@@ -50,9 +50,9 @@ struct ImKeyAtiNode *newImKeyAtiNodeEmpty() {
     return (node);
 }
 
-struct ImKeyAti *newImKeyAti() {
-    struct ImKeyAti *avl_tree = (struct ImKeyAti *)malloc(sizeof(struct ImKeyAti));
-    avl_tree->stack_ = (ImKeyAtiNodeStack_t)malloc(sizeof(ImKeyAtiNodeStackItem_t) * MAX_AVL_STACK_LENGTH_X32);
+struct ImKeyTAti *newImKeyAti() {
+    struct ImKeyTAti *avl_tree = (struct ImKeyTAti *)malloc(sizeof(struct ImKeyTAti));
+    avl_tree->stack_ = (imKeyAtiNodeStack_t)malloc(sizeof(imKeyAtiNodeStackItem_t) * MAX_AVL_STACK_LENGTH_X32);
     *avl_tree->stack_ = NULL;
     avl_tree->top_node_ = NULL;
     avl_tree->first_node_ = NULL;
@@ -63,7 +63,7 @@ struct ImKeyAti *newImKeyAti() {
 
 void deleteImKeyAtiNode(struct ImKeyAtiNode *node) { free(node); }
 
-void deleteImKeyAti(struct ImKeyAti *avl_tree, deleteKeyAndDataF_t delete_data_f) {
+void deleteImKeyAti(struct ImKeyTAti *avl_tree, deleteKeyAndDataF_t delete_data_f) {
     struct ImKeyAtiNode *node = avl_tree->top_node_;
 
     if (node) {
@@ -81,7 +81,7 @@ void deleteImKeyAti(struct ImKeyAti *avl_tree, deleteKeyAndDataF_t delete_data_f
 
 
 
-struct ImKeyAtiNode *findImKeyAtiNode(struct ImKeyAti *avl_tree, tree_key_t key) {
+struct ImKeyAtiNode *findImKeyAtiNode(struct ImKeyTAti *avl_tree, tree_key_t key) {
 
     size_t index = (size_t) key;
     struct ImKeyAtiNode *node = avl_tree->top_node_;
@@ -103,7 +103,7 @@ struct ImKeyAtiNode *findImKeyAtiNode(struct ImKeyAti *avl_tree, tree_key_t key)
 }
 
 
-struct ImKeyAtiNode *getFirstImKeyAtiNode(struct ImKeyAti *avl_tree) {
+struct ImKeyAtiNode *getFirstImKeyAtiNode(struct ImKeyTAti *avl_tree) {
     struct ImKeyAtiNode *node = avl_tree->top_node_;
 
     if (node)
@@ -185,22 +185,37 @@ struct ImKeyAtiNode *getFirstImKeyAtiNode(struct ImKeyAti *avl_tree) {
  * exists, developer responsible for insertion), otherwise it creates a new
  * node, inserts that node into the, balances the tree and returns NULL.
  */
-struct ImKeyAtiNode *insertImKeyAtiNode(struct ImKeyAti *avl_tree, const tree_key_t *key_p, tree_data_t data) {
-    ImKeyAtiNodeStack_t node_stack = avl_tree->stack_;
-    ImKeyAtiNodeStackItem_t stack_item = &(avl_tree->top_node_);
+struct ImKeyAtiNode *insertImKeyAtiNode(struct ImKeyTAti *avl_tree, const tree_key_t *key_p, tree_data_t data) {
+    imKeyAtiNodeStack_t node_stack = avl_tree->stack_;
+    imKeyAtiNodeStackItem_t stack_item = &(avl_tree->top_node_);
     *(++node_stack) = stack_item;
 
-    while (*stack_item != NULL) {
-        struct ImKeyAtiNode *node = *stack_item;
-        if (AVL_KEY_LESS(*key_p, node->key_)) stack_item = &(node->left_branch_);
-        else if (AVL_KEY_LESS(node->key_, *key_p)) stack_item = &(node->right_branch_);
-        else return node;
+
+    size_t index = (size_t) *key_p;
+    struct ImKeyAtiNode *node = avl_tree->top_node_;
+
+    if (node == NULL || (node->size_ <= index)) return NULL;
+
+    size_t current_index = (node->left_branch_ ? node->left_branch_->size_ : 0);
+
+    while (1) {
+
+        if (index < current_index) {
+            stack_item = &node->left_branch_;
+            node = *stack_item;
+            current_index -= (node->right_branch_ ? node->right_branch_->size_ : 0) + 1;
+        } else if (index > current_index) {
+            stack_item = &node->right_branch_;
+            node = *stack_item;
+            current_index += (node->left_branch_ ? node->left_branch_->size_ : 0) + 1;
+        } else break;
         *(++node_stack) = stack_item;
     }
 
+
     // create node and fill it
     struct ImKeyAtiNode *to_insert = newImKeyAtiNodeEmpty();
-    to_insert->key_ = *key_p;
+
     to_insert->data_ = data;
 
     *stack_item = to_insert;
@@ -209,7 +224,7 @@ struct ImKeyAtiNode *insertImKeyAtiNode(struct ImKeyAti *avl_tree, const tree_ke
 
 
 
-    struct ImKeyAtiNode *node = **node_stack;
+    node = **node_stack;
 
     if (node->left_branch_ == to_insert) {
         to_insert->next_ = node;
@@ -359,9 +374,9 @@ size_treatment:
 
 
 
-struct ImKeyAtiNode *removeImKeyAtiNode(struct ImKeyAti *avl_tree, const tree_key_t *key_p) {
-    ImKeyAtiNodeStack_t node_stack = avl_tree->stack_;
-    ImKeyAtiNodeStackItem_t stack_item = &(avl_tree->top_node_);
+struct ImKeyAtiNode *removeImKeyAtiNode(struct ImKeyTAti *avl_tree, const tree_key_t *key_p) {
+    imKeyAtiNodeStack_t node_stack = avl_tree->stack_;
+    imKeyAtiNodeStackItem_t stack_item = &(avl_tree->top_node_);
 
 
 
@@ -392,7 +407,7 @@ struct ImKeyAtiNode *removeImKeyAtiNode(struct ImKeyAti *avl_tree, const tree_ke
     } else if (node_to_delete->right_branch_ == NULL) {
         *stack_item = node_to_delete->left_branch_;
     } else {
-        ImKeyAtiNodeStackItem_t *stack_pos_to_insert = ++node_stack;
+        imKeyAtiNodeStackItem_t *stack_pos_to_insert = ++node_stack;
 
         *stack_pos_to_insert = &(node_to_delete->left_branch_);
 
@@ -542,7 +557,7 @@ size_treatment:
 
 
 
-struct ImKeyAtiNode *findImKeyAtiNodeWithIndex(struct ImKeyAti *avl_tree, tree_key_t key, size_t *index) {
+struct ImKeyAtiNode *findImKeyAtiNodeWithIndex(struct ImKeyTAti *avl_tree, tree_key_t key, size_t *index) {
     struct ImKeyAtiNode *node = avl_tree->top_node_;
     if (node == NULL) return NULL;
 
@@ -563,7 +578,7 @@ struct ImKeyAtiNode *findImKeyAtiNodeWithIndex(struct ImKeyAti *avl_tree, tree_k
 }
 
 
-struct ImKeyAtiNode *findImKeyAtiNodeByIndex(struct ImKeyAti *avl_tree, size_t index) {
+struct ImKeyAtiNode *findImKeyAtiNodeByIndex(struct ImKeyTAti *avl_tree, size_t index) {
     struct ImKeyAtiNode *node = avl_tree->top_node_;
 
     if (node == NULL || (node->size_ <= index)) return NULL;

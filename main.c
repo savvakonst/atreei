@@ -23,7 +23,7 @@
         fflush(stdout);      \
     }
 
-int walkPrint(struct AvlNode* node) {
+int walkPrint(struct AtiNode* node) {
     if (node->left_branch_) walkPrint(node->left_branch_);
 
     PRINT_F("w %04lld \n", (uint64_t)node->key_);
@@ -33,7 +33,7 @@ int walkPrint(struct AvlNode* node) {
 }
 
 
-int walkValidate_(struct AvlNode* node, int* cnt) {
+int walkValidate_(struct AtiNode* node, int* cnt) {
     if (node == NULL) return 0;
 
     int status = 0;
@@ -67,14 +67,14 @@ int walkValidate_(struct AvlNode* node, int* cnt) {
     return status;
 }
 
-int walkValidate(struct AvlNode* node) {
+int walkValidate(struct AtiNode* node) {
     int c = 0;
     return walkValidate_(node, &c);
 }
 
 
 
-void printNodeDot_(struct AvlNode* node, FILE* stream) {
+void printNodeDot_(struct AtiNode* node, FILE* stream) {
     fprintf(stream, "    %llu [label = \"%llu, %llu\" ];\n", (uint64_t)node->key_, (uint64_t)node->key_,
             (uint64_t)node->height_);
 
@@ -89,7 +89,7 @@ void printNodeDot_(struct AvlNode* node, FILE* stream) {
     }
 }
 
-void printTreeDot(struct AvlNode* top_node, FILE* stream) {
+void printTreeDot(struct AtiNode* top_node, FILE* stream) {
     fprintf(stream, "digraph BinaryTree {\n");
     fprintf(stream, "    node [fontname=\"Arial\"];\n rankdir=\"BT\";\n");
 
@@ -106,7 +106,7 @@ void printTreeDot(struct AvlNode* top_node, FILE* stream) {
 typedef uint64_t test_data_type_t;
 #include <string.h>
 int main(int argc, char* argv[]) {
-    struct AvlTree* tree = newAvlTree();
+    struct Ati* tree = newAti();
 
     test_data_type_t* data_array = malloc(sizeof(test_data_type_t) * DATA_SIZE);
     test_data_type_t* ptr = data_array;
@@ -119,12 +119,12 @@ int main(int argc, char* argv[]) {
         //         cert-msc50-cpp)
         //
         //            name[KEY_SIZE] = 0;
-        //        } while (findAvlNode(tree, name) != NULL);
+        //        } while (findAtiNode(tree, name) != NULL);
 
         test_data_type_t random = (unsigned long)rand();  // NOLINT(cert-msc30-c, cert-msc50-cpp)
         *(ptr++) = random;
         PRINT_F("random N: %llu\n", random);
-        insertAvlNode(tree, (const tree_key_t*)&random, NULL);
+        insertAtiNode(tree, (const tree_key_t*)&random, NULL);
 
 
         char* buf;
@@ -163,14 +163,14 @@ int main(int argc, char* argv[]) {
     PRINT_F(" --------------------------------\n");
 
     {
-        struct AvlNode* node = getFirstAvlNode(tree);
+        struct AtiNode* node = getFirstAtiNode(tree);
         size_t cnt = 0;
         while (node) {
             PRINT_F("%04d   %06llu \n", cnt, (uint64_t)node->key_);
             size_t index = -1;
-            findAvlNodeWithIndex(tree, node->key_, &index);
-            if (findAvlNodeByIndex(tree, cnt) != node)
-                PRINT_F("\033[0;31m error findAvlNodeByIndex(tree,cnt) != node:   \033[0m\n");
+            findAtiNodeWithIndex(tree, node->key_, &index);
+            if (findAtiNodeByIndex(tree, cnt) != node)
+                PRINT_F("\033[0;31m error findAtiNodeByIndex(tree,cnt) != node:   \033[0m\n");
             if (index != cnt) PRINT_F("\033[0;31m error index != cnt: %llu != %llu  \033[0m\n", index, cnt);
 
             node = node->next_;
@@ -182,7 +182,7 @@ int main(int argc, char* argv[]) {
         char cond = 1;
         for (int i = 0; i < DATA_SIZE; i++) {
             test_data_type_t temp_data = *(data_array + i);
-            removeAvlNode(tree, &temp_data);
+            removeAtiNode(tree, &temp_data);
 
             PRINT_F("deletion N: %d\n", i);
             // walkValidate(tree->top_node_);
@@ -190,12 +190,12 @@ int main(int argc, char* argv[]) {
             // PRINT_F(" \n");
         }
     } else {
-        struct AvlNode* node = getFirstAvlNode(tree);
+        struct AtiNode* node = getFirstAtiNode(tree);
         walkValidate(tree->top_node_);
         int cnt = 0;
         while (node && cnt < 20) {
             node = node->next_;
-            removeAvlNode(tree, &node->previous_->key_);
+            removeAtiNode(tree, &node->previous_->key_);
 
             PRINT_F("deletion N: %d\n", cnt);
 
@@ -211,7 +211,7 @@ int main(int argc, char* argv[]) {
 
 
 
-    deleteAvlTree(tree, NULL);
+    deleteAtiTree(tree, NULL);
 
 
 

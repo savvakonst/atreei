@@ -24,8 +24,8 @@
 #endif
 
 // Create a node
-struct AvlNode *newAvlNode(tree_key_t key, tree_data_t data) {
-    struct AvlNode *node = (struct AvlNode *)malloc(sizeof(struct AvlNode));
+struct AtiNode *newAvlNode(tree_key_t key, tree_data_t data) {
+    struct AtiNode *node = (struct AtiNode *)malloc(sizeof(struct AtiNode));
 
     node->key_ = key;
     node->data_ = data;
@@ -41,8 +41,8 @@ struct AvlNode *newAvlNode(tree_key_t key, tree_data_t data) {
     return (node);
 }
 
-struct AvlNode *newAvlNodeEmpty() {
-    struct AvlNode *node = (struct AvlNode *)malloc(sizeof(struct AvlNode));
+struct AtiNode *newAtiNodeEmpty() {
+    struct AtiNode *node = (struct AtiNode *)malloc(sizeof(struct AtiNode));
 
     node->left_branch_ = NULL;
     node->right_branch_ = NULL;
@@ -60,9 +60,9 @@ struct AvlNode *newAvlNodeEmpty() {
     return (node);
 }
 
-struct AvlTree *newAvlTree() {
-    struct AvlTree *avl_tree = (struct AvlTree *)malloc(sizeof(struct AvlTree));
-    avl_tree->stack_ = (avlNodeStack_t)malloc(sizeof(avlNodeStackItem_t) * MAX_AVL_STACK_LENGTH_X32);
+struct Ati *newAti() {
+    struct Ati *avl_tree = (struct Ati *)malloc(sizeof(struct Ati));
+    avl_tree->stack_ = (atiNodeStack_t)malloc(sizeof(atiNodeStackItem_t) * MAX_AVL_STACK_LENGTH_X32);
     *avl_tree->stack_ = NULL;
     avl_tree->top_node_ = NULL;
     avl_tree->first_node_ = NULL;
@@ -71,16 +71,16 @@ struct AvlTree *newAvlTree() {
     return avl_tree;
 }
 
-void deleteAvlNode(struct AvlNode *node) { free(node); }
+void deleteAtiNode(struct AtiNode *node) { free(node); }
 
-void deleteAvlTree(struct AvlTree *avl_tree, deleteKeyAndDataF_t delete_data_f) {
-    struct AvlNode *node = avl_tree->top_node_;
+void deleteAtiTree(struct Ati *avl_tree, deleteKeyAndDataF_t delete_data_f) {
+    struct AtiNode *node = avl_tree->top_node_;
 
     if (node) {
         while (node->left_branch_) node = node->left_branch_;
 
         while (node) {
-            struct AvlNode *tmp = node;
+            struct AtiNode *tmp = node;
             node = node->next_;
             if (delete_data_f) delete_data_f(tmp);
         }
@@ -91,8 +91,8 @@ void deleteAvlTree(struct AvlTree *avl_tree, deleteKeyAndDataF_t delete_data_f) 
 
 
 
-struct AvlNode *findAvlNode(struct AvlTree *avl_tree, tree_key_t key) {
-    struct AvlNode *node = avl_tree->top_node_;
+struct AtiNode *findAtiNode(struct Ati *avl_tree, tree_key_t key) {
+    struct AtiNode *node = avl_tree->top_node_;
 
     while (node != NULL) {
         if (AVL_KEY_LESS(key, node->key_)) {
@@ -105,8 +105,8 @@ struct AvlNode *findAvlNode(struct AvlTree *avl_tree, tree_key_t key) {
 }
 
 
-struct AvlNode *getFirstAvlNode(struct AvlTree *avl_tree) {
-    struct AvlNode *node = avl_tree->top_node_;
+struct AtiNode *getFirstAtiNode(struct Ati *avl_tree) {
+    struct AtiNode *node = avl_tree->top_node_;
 
     if (node)
         while (node->left_branch_) node = node->left_branch_;
@@ -117,7 +117,7 @@ struct AvlNode *getFirstAvlNode(struct AvlTree *avl_tree) {
 
 
 #define LITE_LEFT_ROTATION(DST, SRC, RIGHT)        \
-    struct AvlNode *tmp_0 = (RIGHT)->left_branch_; \
+    struct AtiNode *tmp_0 = (RIGHT)->left_branch_; \
     (RIGHT)->left_branch_ = (SRC);                 \
     (SRC)->right_branch_ = tmp_0;                  \
     (DST) = (RIGHT)
@@ -125,20 +125,20 @@ struct AvlNode *getFirstAvlNode(struct AvlTree *avl_tree) {
 
 #define LEFT_ROTATION(DST, SRC)               \
                                               \
-    struct AvlNode *r = (SRC)->right_branch_; \
+    struct AtiNode *r = (SRC)->right_branch_; \
     LITE_LEFT_ROTATION(DST, SRC, r);
 
 
 
 #define LITE_RIGHT_ROTATION(DST, SRC, LEFT)        \
-    struct AvlNode *tmp_0 = (LEFT)->right_branch_; \
+    struct AtiNode *tmp_0 = (LEFT)->right_branch_; \
     (LEFT)->right_branch_ = (SRC);                 \
     (SRC)->left_branch_ = tmp_0;                   \
     (DST) = (LEFT)
 
 #define RIGHT_ROTATION(DST, SRC)             \
                                              \
-    struct AvlNode *l = (SRC)->left_branch_; \
+    struct AtiNode *l = (SRC)->left_branch_; \
     LITE_RIGHT_ROTATION(DST, SRC, l);
 
 #ifdef SIZE_SUPPORT
@@ -197,13 +197,13 @@ struct AvlNode *getFirstAvlNode(struct AvlTree *avl_tree) {
  * exists, developer responsible for insertion), otherwise it creates a new
  * node, inserts that node into the, balances the tree and returns NULL.
  */
-struct AvlNode *insertAvlNode(struct AvlTree *avl_tree, const tree_key_t *key_p, tree_data_t data) {
-    avlNodeStack_t node_stack = avl_tree->stack_;
-    avlNodeStackItem_t stack_item = &(avl_tree->top_node_);
+struct AtiNode *insertAtiNode(struct Ati *avl_tree, const tree_key_t *key_p, tree_data_t data) {
+    atiNodeStack_t node_stack = avl_tree->stack_;
+    atiNodeStackItem_t stack_item = &(avl_tree->top_node_);
     *(++node_stack) = stack_item;
 
     while (*stack_item != NULL) {
-        struct AvlNode *node = *stack_item;
+        struct AtiNode *node = *stack_item;
         if (AVL_KEY_LESS(*key_p, node->key_)) stack_item = &(node->left_branch_);
         else if (AVL_KEY_LESS(node->key_, *key_p)) stack_item = &(node->right_branch_);
         else return node;
@@ -211,7 +211,7 @@ struct AvlNode *insertAvlNode(struct AvlTree *avl_tree, const tree_key_t *key_p,
     }
 
     // create node and fill it
-    struct AvlNode *to_insert = newAvlNodeEmpty();
+    struct AtiNode *to_insert = newAtiNodeEmpty();
     to_insert->key_ = *key_p;
     to_insert->data_ = data;
 
@@ -221,7 +221,7 @@ struct AvlNode *insertAvlNode(struct AvlTree *avl_tree, const tree_key_t *key_p,
 
 
 
-    struct AvlNode *node = **node_stack;
+    struct AtiNode *node = **node_stack;
 
     if (node->left_branch_ == to_insert) {
         to_insert->next_ = node;
@@ -251,9 +251,9 @@ struct AvlNode *insertAvlNode(struct AvlTree *avl_tree, const tree_key_t *key_p,
     SIZE_INCREMENT(node);
 
     if (node->right_branch_ == NULL) {
-        struct AvlNode *l = node->left_branch_;
+        struct AtiNode *l = node->left_branch_;
         if (l->right_branch_) {
-            struct AvlNode *r = l->right_branch_;
+            struct AtiNode *r = l->right_branch_;
             l->right_branch_ = NULL;
 
             r->left_branch_ = l;
@@ -276,9 +276,9 @@ struct AvlNode *insertAvlNode(struct AvlTree *avl_tree, const tree_key_t *key_p,
         --node_stack;
         FINISH_TREATMENT;
     } else if (node->left_branch_ == NULL) {
-        struct AvlNode *r = node->right_branch_;
+        struct AtiNode *r = node->right_branch_;
         if (r->left_branch_) {
-            struct AvlNode *l = r->left_branch_;
+            struct AtiNode *l = r->left_branch_;
             r->left_branch_ = NULL;
 
             l->right_branch_ = r;
@@ -314,7 +314,7 @@ struct AvlNode *insertAvlNode(struct AvlTree *avl_tree, const tree_key_t *key_p,
             if (diff == 1) node->height_ = node->left_branch_->height_ + 1;
             else {
                 // TODO define 'r' here, and simplify comparison and LEFT_ROTATION
-                struct AvlNode *l = node->left_branch_;
+                struct AtiNode *l = node->left_branch_;
                 if (l->left_branch_->height_ < l->right_branch_->height_) {  //(simple rot)
                     LEFT_ROTATION(node->left_branch_, l);
                     l->height_ = r->height_;
@@ -333,7 +333,7 @@ struct AvlNode *insertAvlNode(struct AvlTree *avl_tree, const tree_key_t *key_p,
         } else if (diff < 0) {
             if (diff == -1) node->height_ = node->right_branch_->height_ + 1;
             else {
-                struct AvlNode *r = node->right_branch_;
+                struct AtiNode *r = node->right_branch_;
                 if (r->right_branch_->height_ < r->left_branch_->height_) {  //(simple rot)
                     RIGHT_ROTATION(node->right_branch_, r);
                     r->height_ = l->height_;
@@ -374,9 +374,9 @@ size_treatment:
 
 
 
-struct AvlNode *removeAvlNode(struct AvlTree *avl_tree, const tree_key_t *key_p) {
-    avlNodeStack_t node_stack = avl_tree->stack_;
-    avlNodeStackItem_t stack_item = &(avl_tree->top_node_);
+struct AtiNode *removeAtiNode(struct Ati *avl_tree, const tree_key_t *key_p) {
+    atiNodeStack_t node_stack = avl_tree->stack_;
+    atiNodeStackItem_t stack_item = &(avl_tree->top_node_);
 
 #ifdef SIZE_SUPPORT
 #    define FINISH_TREATMENT goto size_treatment
@@ -385,7 +385,7 @@ struct AvlNode *removeAvlNode(struct AvlTree *avl_tree, const tree_key_t *key_p)
 #endif
 
 
-    struct AvlNode *node_to_delete = *stack_item;
+    struct AtiNode *node_to_delete = *stack_item;
 
     while (node_to_delete != NULL) {
         *(++node_stack) = stack_item;
@@ -412,11 +412,11 @@ struct AvlNode *removeAvlNode(struct AvlTree *avl_tree, const tree_key_t *key_p)
     } else if (node_to_delete->right_branch_ == NULL) {
         *stack_item = node_to_delete->left_branch_;
     } else {
-        avlNodeStackItem_t *stack_pos_to_insert = ++node_stack;
+        atiNodeStackItem_t *stack_pos_to_insert = ++node_stack;
 
         *stack_pos_to_insert = &(node_to_delete->left_branch_);
 
-        struct AvlNode *tmp = node_to_delete->left_branch_;
+        struct AtiNode *tmp = node_to_delete->left_branch_;
         while (tmp->right_branch_) {
             *(++node_stack) = &(tmp->right_branch_);
             tmp = tmp->right_branch_;
@@ -440,16 +440,16 @@ struct AvlNode *removeAvlNode(struct AvlTree *avl_tree, const tree_key_t *key_p)
 
     if (*(--node_stack) == NULL) return node_to_delete;
 
-    struct AvlNode *node = **node_stack;
+    struct AtiNode *node = **node_stack;
 
     if (h == 1) {
         SIZE_DECREMENT(node);
         if (node->height_ == 2) {
             if (node->left_branch_ == NULL && node->right_branch_ == NULL) node->height_ = 1;
         } else if (node->left_branch_) {
-            struct AvlNode *l = node->left_branch_;
+            struct AtiNode *l = node->left_branch_;
             if (l->right_branch_) {
-                struct AvlNode *r = l->right_branch_;
+                struct AtiNode *r = l->right_branch_;
                 l->right_branch_ = NULL;
 
                 r->left_branch_ = l;
@@ -471,9 +471,9 @@ struct AvlNode *removeAvlNode(struct AvlTree *avl_tree, const tree_key_t *key_p)
             node->height_ = 1;
 
         } else {
-            struct AvlNode *r = node->right_branch_;
+            struct AtiNode *r = node->right_branch_;
             if (r->left_branch_) {
-                struct AvlNode *l = r->left_branch_;
+                struct AtiNode *l = r->left_branch_;
                 r->left_branch_ = NULL;
 
                 l->right_branch_ = r;
@@ -508,7 +508,7 @@ struct AvlNode *removeAvlNode(struct AvlTree *avl_tree, const tree_key_t *key_p)
             if (diff == 1) {
                 FINISH_TREATMENT;  // node->height_ = node->left_branch_->height_ + 1;
             } else {
-                struct AvlNode *l = node->left_branch_;
+                struct AtiNode *l = node->left_branch_;
                 tree_height_t h_tmp = l->right_branch_->height_;
                 // TODO define 'r' here, and simplify comparison and LEFT_ROTATION
                 if (l->left_branch_->height_ < l->right_branch_->height_) {  //(simple rot)
@@ -527,7 +527,7 @@ struct AvlNode *removeAvlNode(struct AvlTree *avl_tree, const tree_key_t *key_p)
             if (diff == -1) {
                 FINISH_TREATMENT;  // node->height_ = node->right_branch_->height_ + 1;
             } else {
-                struct AvlNode *r = node->right_branch_;
+                struct AtiNode *r = node->right_branch_;
                 tree_height_t h_tmp = r->left_branch_->height_;
                 if (r->right_branch_->height_ < r->left_branch_->height_) {  //(simple rot)
                     RIGHT_ROTATION(node->right_branch_, r);
@@ -563,8 +563,8 @@ size_treatment:
 
 #ifdef SIZE_SUPPORT
 
-struct AvlNode *findAvlNodeWithIndex(struct AvlTree *avl_tree, tree_key_t key, size_t *index) {
-    struct AvlNode *node = avl_tree->top_node_;
+struct AtiNode *findAtiNodeWithIndex(struct Ati *avl_tree, tree_key_t key, size_t *index) {
+    struct AtiNode *node = avl_tree->top_node_;
     if (node == NULL) return NULL;
 
     *index = node->left_branch_ ? node->left_branch_->size_ : 0;
@@ -584,8 +584,8 @@ struct AvlNode *findAvlNodeWithIndex(struct AvlTree *avl_tree, tree_key_t key, s
 }
 
 
-struct AvlNode *findAvlNodeByIndex(struct AvlTree *avl_tree, size_t index) {
-    struct AvlNode *node = avl_tree->top_node_;
+struct AtiNode *findAtiNodeByIndex(struct Ati *avl_tree, size_t index) {
+    struct AtiNode *node = avl_tree->top_node_;
 
     if (node == NULL || (node->size_ <= index)) return NULL;
 
