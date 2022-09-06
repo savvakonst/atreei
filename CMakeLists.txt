@@ -6,8 +6,8 @@ project(threaded_avl_tree C)
 
 # add the executable
 add_executable(threaded_avl_tree_
-        ThreadedAvlTree.h
-        ThreadedAvlTree.c
+        ThreadedATI.h
+        ThreadedATI.c
         main.c
         )
 set_property(TARGET threaded_avl_tree_ PROPERTY C_STANDARD 11)
