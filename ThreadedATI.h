@@ -7,8 +7,8 @@
 #include <stdint.h>
 #include <string.h>
 
-typedef char *tree_key_t;
-typedef char *tree_data_t;
+typedef void *tree_key_t;
+typedef void *tree_data_t;
 
 typedef unsigned char tree_height_t;
 typedef char tree_diff_t;

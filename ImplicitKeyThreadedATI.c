@@ -6,22 +6,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "ThreadedATI.h"
+#include "ImplicitKeyThreadedATI.h"
 
 #define MAX_AVL_STACK_LENGTH_X64 93
 #define MAX_AVL_STACK_LENGTH_X32 47
 
-#ifdef _DEBUG
-#    include <stdio.h>
-#    define D_COMMA ,
-#    define DEBUG_PRINT(X) \
-        printf(X);         \
-        fflush(stdout);
-
-#else
-#    define D_COMMA
-#    define DEBUG_PRINT(X)
-#endif
+#define AVL_KEY_LESS(A_KEY, B_KEY) ((uint64_t)(A_KEY) < (uint64_t)(B_KEY))
 
 // Create a node
 struct ImKeyAtiNode *newImKeyAtiNode(tree_key_t key, tree_data_t data) {
@@ -52,16 +42,16 @@ struct ImKeyAtiNode *newImKeyAtiNodeEmpty() {
     node->previous_ = NULL;
 
     node->height_ = 1;
-#ifdef SIZE_SUPPORT
+
     node->size_ = 1;
-#endif
+
 
 
     return (node);
 }
 
-struct AvlTree *newAvlTree() {
-    struct AvlTree *avl_tree = (struct AvlTree *)malloc(sizeof(struct AvlTree));
+struct ImKeyAti *newImKeyAti() {
+    struct ImKeyAti *avl_tree = (struct ImKeyAti *)malloc(sizeof(struct ImKeyAti));
     avl_tree->stack_ = (ImKeyAtiNodeStack_t)malloc(sizeof(ImKeyAtiNodeStackItem_t) * MAX_AVL_STACK_LENGTH_X32);
     *avl_tree->stack_ = NULL;
     avl_tree->top_node_ = NULL;
@@ -73,7 +63,7 @@ struct AvlTree *newAvlTree() {
 
 void deleteImKeyAtiNode(struct ImKeyAtiNode *node) { free(node); }
 
-void deleteAvlTree(struct AvlTree *avl_tree, deleteKeyAndDataF_t delete_data_f) {
+void deleteImKeyAti(struct ImKeyAti *avl_tree, deleteKeyAndDataF_t delete_data_f) {
     struct ImKeyAtiNode *node = avl_tree->top_node_;
 
     if (node) {
@@ -91,21 +81,29 @@ void deleteAvlTree(struct AvlTree *avl_tree, deleteKeyAndDataF_t delete_data_f) 
 
 
 
-struct ImKeyAtiNode *findImKeyAtiNode(struct AvlTree *avl_tree, tree_key_t key) {
+struct ImKeyAtiNode *findImKeyAtiNode(struct ImKeyAti *avl_tree, tree_key_t key) {
+
+    size_t index = (size_t) key;
     struct ImKeyAtiNode *node = avl_tree->top_node_;
 
-    while (node != NULL) {
-        if (AVL_KEY_LESS(key, node->key_)) {
+    if (node == NULL || (node->size_ <= index)) return NULL;
+
+    size_t current_index = (node->left_branch_ ? node->left_branch_->size_ : 0);
+
+    while (1) {
+        if (index < current_index) {
             node = node->left_branch_;
-        } else if (AVL_KEY_LESS(node->key_, key)) {
+            current_index -= (node->right_branch_ ? node->right_branch_->size_ : 0) + 1;
+        } else if (index > current_index) {
             node = node->right_branch_;
+            current_index += (node->left_branch_ ? node->left_branch_->size_ : 0) + 1;
         } else return node;
     }
     return node;
 }
 
 
-struct ImKeyAtiNode *getFirstImKeyAtiNode(struct AvlTree *avl_tree) {
+struct ImKeyAtiNode *getFirstImKeyAtiNode(struct ImKeyAti *avl_tree) {
     struct ImKeyAtiNode *node = avl_tree->top_node_;
 
     if (node)
@@ -141,7 +139,7 @@ struct ImKeyAtiNode *getFirstImKeyAtiNode(struct AvlTree *avl_tree) {
     struct ImKeyAtiNode *l = (SRC)->left_branch_; \
     LITE_RIGHT_ROTATION(DST, SRC, l);
 
-#ifdef SIZE_SUPPORT
+
 #    define SIZE_INCREMENT(NODE) (NODE)->size_++
 #    define SIZE_DECREMENT(NODE) (NODE)->size_--
 
@@ -165,19 +163,9 @@ struct ImKeyAtiNode *getFirstImKeyAtiNode(struct AvlTree *avl_tree) {
         }
 
 
-#    define UPDATE_DOUBLE_ROTATION_SIZES(X, Y) X->size_ = X->size_ - (Y ? Y->size_ : 0) - 1
+#    define UPDATE_DOUBLE_ROTATION_SIZES(X, Y)  (X)->size_ = ((X)->size_ - ((Y) ? (Y)->size_ : 0) - 1)
 
-#else
-#    define SIZE_INCREMENT(NODE)
-#    define SIZE_DECREMENT(NODE)
 
-#    define DECREMENT_NODE_STACK --node_stack
-
-#    define UPDATE_SHORT_DOUBLE_ROTATION_SIZES(X)
-#    define UPDATE_SHORT_SINGLE_ROTATION_SIZES(X)
-#    define UPDATE_ROTATION_SIZES(X, NODE)
-#    define UPDATE_DOUBLE_ROTATION_SIZES(X, Y)
-#endif
 
 
 /*                           *
@@ -197,7 +185,7 @@ struct ImKeyAtiNode *getFirstImKeyAtiNode(struct AvlTree *avl_tree) {
  * exists, developer responsible for insertion), otherwise it creates a new
  * node, inserts that node into the, balances the tree and returns NULL.
  */
-struct ImKeyAtiNode *insertImKeyAtiNode(struct AvlTree *avl_tree, const tree_key_t *key_p, tree_data_t data) {
+struct ImKeyAtiNode *insertImKeyAtiNode(struct ImKeyAti *avl_tree, const tree_key_t *key_p, tree_data_t data) {
     ImKeyAtiNodeStack_t node_stack = avl_tree->stack_;
     ImKeyAtiNodeStackItem_t stack_item = &(avl_tree->top_node_);
     *(++node_stack) = stack_item;
@@ -235,17 +223,14 @@ struct ImKeyAtiNode *insertImKeyAtiNode(struct AvlTree *avl_tree, const tree_key
         if (to_insert->next_) to_insert->next_->previous_ = to_insert;
     }
 
-#ifdef SIZE_SUPPORT
-#    define FINISH_TREATMENT goto size_treatment
-#else
-#    define FINISH_TREATMENT return NULL
-#endif
 
-    if (node->height_ > 1) FINISH_TREATMENT;
+
+
+    if (node->height_ > 1) goto size_treatment;
     node->height_ = 2;
     // node = **(--node_stack);
     SIZE_INCREMENT(node);
-    if (*(--node_stack) == NULL || (**node_stack)->height_ > 2) FINISH_TREATMENT;
+    if (*(--node_stack) == NULL || (**node_stack)->height_ > 2) goto size_treatment;
 
     node = **(node_stack);
     SIZE_INCREMENT(node);
@@ -274,7 +259,7 @@ struct ImKeyAtiNode *insertImKeyAtiNode(struct AvlTree *avl_tree, const tree_key
         node->left_branch_ = NULL;
         node->height_ = 1;
         --node_stack;
-        FINISH_TREATMENT;
+        goto size_treatment;
     } else if (node->left_branch_ == NULL) {
         struct ImKeyAtiNode *r = node->right_branch_;
         if (r->left_branch_) {
@@ -299,7 +284,7 @@ struct ImKeyAtiNode *insertImKeyAtiNode(struct AvlTree *avl_tree, const tree_key
         node->right_branch_ = NULL;
         node->height_ = 1;
         --node_stack;
-        FINISH_TREATMENT;
+        goto size_treatment;
     }
 
     node->height_ = 3;
@@ -328,7 +313,7 @@ struct ImKeyAtiNode *insertImKeyAtiNode(struct AvlTree *avl_tree, const tree_key
 
                 UPDATE_ROTATION_SIZES(l, left_branch_, node);
                 DECREMENT_NODE_STACK;
-                FINISH_TREATMENT;
+                goto size_treatment;
             }
         } else if (diff < 0) {
             if (diff == -1) node->height_ = node->right_branch_->height_ + 1;
@@ -347,18 +332,18 @@ struct ImKeyAtiNode *insertImKeyAtiNode(struct AvlTree *avl_tree, const tree_key
 
                 UPDATE_ROTATION_SIZES(r, right_branch_, node);
                 DECREMENT_NODE_STACK;
-                FINISH_TREATMENT;
+                goto size_treatment;
             }
         } else {
-#ifdef SIZE_SUPPORT
+
             --node_stack;
-#endif
-            FINISH_TREATMENT;
+
+            goto size_treatment;
         }
 
         // node = **(node_stack--);
     }
-#ifdef SIZE_SUPPORT
+
 
 size_treatment:
     while (*node_stack) {
@@ -366,23 +351,18 @@ size_treatment:
         node->size_++;
         node_stack--;
     }
-#endif
+
 
     return NULL;
-#undef FINISH_TREATMENT
+
 }
 
 
 
-struct ImKeyAtiNode *removeImKeyAtiNode(struct AvlTree *avl_tree, const tree_key_t *key_p) {
+struct ImKeyAtiNode *removeImKeyAtiNode(struct ImKeyAti *avl_tree, const tree_key_t *key_p) {
     ImKeyAtiNodeStack_t node_stack = avl_tree->stack_;
     ImKeyAtiNodeStackItem_t stack_item = &(avl_tree->top_node_);
 
-#ifdef SIZE_SUPPORT
-#    define FINISH_TREATMENT goto size_treatment
-#else
-#    define FINISH_TREATMENT return node_to_delete
-#endif
 
 
     struct ImKeyAtiNode *node_to_delete = *stack_item;
@@ -506,7 +486,7 @@ struct ImKeyAtiNode *removeImKeyAtiNode(struct AvlTree *avl_tree, const tree_key
         int diff = node->left_branch_->height_ - node->right_branch_->height_;
         if (diff > 0) {
             if (diff == 1) {
-                FINISH_TREATMENT;  // node->height_ = node->left_branch_->height_ + 1;
+                goto size_treatment;  // node->height_ = node->left_branch_->height_ + 1;
             } else {
                 struct ImKeyAtiNode *l = node->left_branch_;
                 tree_height_t h_tmp = l->right_branch_->height_;
@@ -525,7 +505,7 @@ struct ImKeyAtiNode *removeImKeyAtiNode(struct AvlTree *avl_tree, const tree_key
             }
         } else if (diff < 0) {
             if (diff == -1) {
-                FINISH_TREATMENT;  // node->height_ = node->right_branch_->height_ + 1;
+                goto size_treatment;  // node->height_ = node->right_branch_->height_ + 1;
             } else {
                 struct ImKeyAtiNode *r = node->right_branch_;
                 tree_height_t h_tmp = r->left_branch_->height_;
@@ -546,7 +526,7 @@ struct ImKeyAtiNode *removeImKeyAtiNode(struct AvlTree *avl_tree, const tree_key
         };
     }
 
-#ifdef SIZE_SUPPORT
+
     return node_to_delete;
 size_treatment:
     while (*(--node_stack)) {
@@ -554,16 +534,15 @@ size_treatment:
         node->size_--;
     }
 
-#endif
+
     return node_to_delete;
-#undef FINISH_TREATMENT
 }
 
 
 
-#ifdef SIZE_SUPPORT
 
-struct ImKeyAtiNode *findImKeyAtiNodeWithIndex(struct AvlTree *avl_tree, tree_key_t key, size_t *index) {
+
+struct ImKeyAtiNode *findImKeyAtiNodeWithIndex(struct ImKeyAti *avl_tree, tree_key_t key, size_t *index) {
     struct ImKeyAtiNode *node = avl_tree->top_node_;
     if (node == NULL) return NULL;
 
@@ -584,7 +563,7 @@ struct ImKeyAtiNode *findImKeyAtiNodeWithIndex(struct AvlTree *avl_tree, tree_ke
 }
 
 
-struct ImKeyAtiNode *findImKeyAtiNodeByIndex(struct AvlTree *avl_tree, size_t index) {
+struct ImKeyAtiNode *findImKeyAtiNodeByIndex(struct ImKeyAti *avl_tree, size_t index) {
     struct ImKeyAtiNode *node = avl_tree->top_node_;
 
     if (node == NULL || (node->size_ <= index)) return NULL;
@@ -604,4 +583,3 @@ struct ImKeyAtiNode *findImKeyAtiNodeByIndex(struct AvlTree *avl_tree, size_t in
     return node;
 }
 
-#endif  // SIZE_SUPPORT

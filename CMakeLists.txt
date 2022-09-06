@@ -6,6 +6,8 @@ project(threaded_avl_tree C)
 
 # add the executable
 add_executable(threaded_avl_tree_
+        ImplicitKeyThreadedATI.c
+        ImplicitKeyThreadedATI.h
         ThreadedATI.h
         ThreadedATI.c
         main.c
