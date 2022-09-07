@@ -11,17 +11,7 @@
 #define MAX_AVL_STACK_LENGTH_X64 93
 #define MAX_AVL_STACK_LENGTH_X32 47
 
-#ifdef _DEBUG
-#    include <stdio.h>
-#    define D_COMMA ,
-#    define DEBUG_PRINT(X) \
-        printf(X);         \
-        fflush(stdout);
 
-#else
-#    define D_COMMA
-#    define DEBUG_PRINT(X)
-#endif
 
 // Create a node
 struct AtiNode *newAvlNode(tree_key_t key, tree_data_t data) {
@@ -65,15 +55,13 @@ struct Ati *newAti() {
     avl_tree->stack_ = (atiNodeStack_t)malloc(sizeof(atiNodeStackItem_t) * MAX_AVL_STACK_LENGTH_X32);
     *avl_tree->stack_ = NULL;
     avl_tree->top_node_ = NULL;
-    avl_tree->first_node_ = NULL;
-    avl_tree->last_node_ = NULL;
-    avl_tree->size_ = 0;
+
     return avl_tree;
 }
 
 void deleteAtiNode(struct AtiNode *node) { free(node); }
 
-void deleteAtiTree(struct Ati *avl_tree, deleteKeyAndDataF_t delete_data_f) {
+void deleteAti(struct Ati *avl_tree, deleteKeyAndDataF_t delete_data_f) {
     struct AtiNode *node = avl_tree->top_node_;
 
     if (node) {

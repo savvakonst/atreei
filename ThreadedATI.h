@@ -50,20 +50,18 @@ typedef void (*deleteKeyAndDataF_t)(struct AtiNode *);
 
 struct Ati {
     struct AtiNode *top_node_;
-    size_t size_;
-    struct AtiNode *first_node_;
-    struct AtiNode *last_node_;
+
 
     /// first element of node stack always equal NULL
     atiNodeStack_t stack_;
 };
 
-struct Ati *newAti() ;
+struct Ati *newAti();
 
 /**
  * frees the memory allocated for avl_tree and its associated nodes, keys and data.
  */
-void deleteAtiTree(struct Ati *avl_tree, deleteKeyAndDataF_t delete_data_f);
+void deleteAti(struct Ati *avl_tree, deleteKeyAndDataF_t delete_data_f);
 
 /**
  * frees the memory allocated for node structure.
