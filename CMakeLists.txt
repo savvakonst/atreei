@@ -11,7 +11,7 @@ add_library(Ati
         ImplicitKeyThreadedATI.h
         ThreadedATI.h
         ThreadedATI.c
-        )
+        Ati.h)
 
 target_include_directories(Ati PUBLIC .)
 

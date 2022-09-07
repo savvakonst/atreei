@@ -44,12 +44,12 @@ int walkValidate_(struct AtiNode* node, int* cnt) {
     }
 
 #ifdef SIZE_SUPPORT
-    size_t left_size = node->left_branch_ ? node->left_branch_->key_ : 0;
-    size_t right_size = node->right_branch_ ? node->right_branch_->key_ : 0;
+    size_t left_size = node->left_branch_ ? node->left_branch_->size_ : 0;
+    size_t right_size = node->right_branch_ ? node->right_branch_->size_ : 0;
 
-    if (left_size + right_size != node->key_ - 1) {
+    if (left_size + right_size != node->size_ - 1) {
         PRINT_F("\033[0;31m size_ error on : pos= %d  (top= %llu  left= %llu  right= %llu ) \033[0m\n", (*cnt),
-                node->key_, left_size, right_size);
+                node->size_, left_size, right_size);
         status = status | 0b0010;
     }
 #endif

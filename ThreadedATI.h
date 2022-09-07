@@ -1,8 +1,8 @@
 //
 // Created by SVK on 18.07.2022.
 //
-#ifndef THREADED_AVL_TREE_H
-#define THREADED_AVL_TREE_H
+#ifndef ATI_THREADED_ATI_H
+#define ATI_THREADED_ATI_H
 
 #include <stdint.h>
 #include <string.h>

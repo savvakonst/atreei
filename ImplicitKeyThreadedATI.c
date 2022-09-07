@@ -11,7 +11,6 @@
 #define MAX_AVL_STACK_LENGTH_X64 93
 #define MAX_AVL_STACK_LENGTH_X32 47
 
-#define AVL_KEY_LESS(A_KEY, B_KEY) ((uint64_t)(A_KEY) < (uint64_t)(B_KEY))
 
 // Create a node
 struct ImKeyAtiNode *newImKeyAtiNode(tree_key_t key, tree_data_t data) {
@@ -559,19 +558,19 @@ size_treatment:
 
 
 struct ImKeyAtiNode *findImKeyAtiNodeWithIndex(struct ImKeyAti *avl_tree, tree_key_t key, size_t *index) {
+    size_t i = (size_t)key;
     struct ImKeyAtiNode *node = avl_tree->top_node_;
-    if (node == NULL) return NULL;
 
-    *index = node->left_branch_ ? node->left_branch_->key_ : 0;
+    if (node == NULL || (node->key_ <= i)) return NULL;
+
+    *index = (node->left_branch_ ? node->left_branch_->key_ : 0);
 
     while (1) {
-        if (AVL_KEY_LESS(key, node->key_)) {
+        if (i < *index) {
             node = node->left_branch_;
-            if (node == NULL) return NULL;
             *index -= (node->right_branch_ ? node->right_branch_->key_ : 0) + 1;
-        } else if (AVL_KEY_LESS(node->key_, key)) {
+        } else if (i > *index) {
             node = node->right_branch_;
-            if (node == NULL) return NULL;
             *index += (node->left_branch_ ? node->left_branch_->key_ : 0) + 1;
         } else return node;
     }

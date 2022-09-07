@@ -1,8 +1,8 @@
 //
 // Created by SVK on 18.07.2022.
 //
-#ifndef THREADED_AVL_TREE_H
-#define THREADED_AVL_TREE_H
+#ifndef ATI_IMPLICIT_KEY_THREADED_ATI_H
+#define ATI_IMPLICIT_KEY_THREADED_ATI_H
 
 #include <stdint.h>
 #include <string.h>
@@ -14,8 +14,6 @@ typedef unsigned char tree_height_t;
 typedef char tree_diff_t;
 
 
-
-#define SIZE_SUPPORT
 
 struct ImKeyAtiNode {
     // tree_key_t key_;
